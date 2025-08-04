@@ -1,0 +1,30 @@
+ 
+****************************************
+Report : area
+Design : ORI_PE_1
+Version: O-2018.06
+Date   : Mon Jul 28 02:46:56 2025
+****************************************
+
+Library(s) Used:
+
+    slow (File: /home/wuyifan/Desktop/0728/Lib/slow.db)
+
+Number of ports:                          253
+Number of nets:                           785
+Number of cells:                          545
+Number of combinational cells:            500
+Number of sequential cells:                42
+Number of macros/black boxes:               0
+Number of buf/inv:                        212
+Number of references:                      13
+
+Combinational area:               2904.249640
+Buf/Inv area:                      672.436813
+Noncombinational area:             625.867203
+Macro/Black Box area:                0.000000
+Net Interconnect area:           48346.908142
+
+Total cell area:                  3530.116843
+Total area:                      51877.024985
+1

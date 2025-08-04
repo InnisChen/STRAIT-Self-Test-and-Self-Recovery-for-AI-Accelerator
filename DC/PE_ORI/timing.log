@@ -1,0 +1,70 @@
+ 
+****************************************
+Report : timing
+        -path full
+        -delay max
+        -max_paths 1
+Design : ORI_PE_1
+Version: O-2018.06
+Date   : Mon Jul 28 02:46:56 2025
+****************************************
+
+Operating Conditions: slow   Library: slow
+Wire Load Model Mode: top
+
+  Startpoint: activation[1]
+              (input port clocked by clk)
+  Endpoint: partial_sum_out_reg[15]
+            (rising edge-triggered flip-flop clocked by clk)
+  Path Group: clk
+  Path Type: max
+
+  Des/Clust/Port     Wire Load Model       Library
+  ------------------------------------------------
+  ORI_PE_1           tsmc090_wl10          slow
+
+  Point                                                   Incr       Path
+  --------------------------------------------------------------------------
+  clock clk (rise edge)                                   0.00       0.00
+  clock network delay (ideal)                             0.10       0.10
+  input external delay                                    0.50       0.60 r
+  activation[1] (in)                                      0.01       0.61 r
+  MAC_u1/activation[1] (MAC)                              0.00       0.61 r
+  MAC_u1/mult_48/b[1] (MAC_DW_mult_uns_2)                 0.00       0.61 r
+  MAC_u1/mult_48/U404/Y (INVX12)                          0.05       0.66 f
+  MAC_u1/mult_48/U326/Y (NOR2X6)                          0.13       0.79 r
+  MAC_u1/mult_48/U329/Y (XOR2X8)                          0.15       0.94 r
+  MAC_u1/mult_48/U266/Y (XNOR3XL)                         0.48       1.43 f
+  MAC_u1/mult_48/product[2] (MAC_DW_mult_uns_2)           0.00       1.43 f
+  MAC_u1/add_49/A[2] (MAC_DW01_add_2)                     0.00       1.43 f
+  MAC_u1/add_49/U179/Y (NOR2X1)                           0.34       1.77 r
+  MAC_u1/add_49/U228/Y (AOI2B1X4)                         0.25       2.02 r
+  MAC_u1/add_49/U301/Y (OA21X4)                           0.17       2.19 r
+  MAC_u1/add_49/U210/Y (OAI21X8)                          0.08       2.26 f
+  MAC_u1/add_49/U187/Y (AOI21BX2)                         0.26       2.52 r
+  MAC_u1/add_49/U283/Y (OAI21X8)                          0.09       2.61 f
+  MAC_u1/add_49/U222/Y (AOI21X8)                          0.14       2.75 r
+  MAC_u1/add_49/U286/Y (OAI21X8)                          0.09       2.84 f
+  MAC_u1/add_49/U216/Y (AOI21X8)                          0.14       2.98 r
+  MAC_u1/add_49/U266/Y (INVX5)                            0.10       3.09 f
+  MAC_u1/add_49/U241/Y (AOI31X1)                          0.22       3.31 r
+  MAC_u1/add_49/U248/Y (XOR2X4)                           0.13       3.44 r
+  MAC_u1/add_49/SUM[15] (MAC_DW01_add_2)                  0.00       3.44 r
+  MAC_u1/result[15] (MAC)                                 0.00       3.44 r
+  partial_sum_out_reg[15]/D (DFFRQXL)                     0.00       3.44 r
+  data arrival time                                                  3.44
+
+  clock clk (rise edge)                                   4.00       4.00
+  clock network delay (ideal)                             0.10       4.10
+  clock uncertainty                                      -0.50       3.60
+  partial_sum_out_reg[15]/CK (DFFRQXL)                    0.00       3.60 r
+  library setup time                                     -0.16       3.44
+  data required time                                                 3.44
+  --------------------------------------------------------------------------
+  data required time                                                 3.44
+  data arrival time                                                 -3.44
+  --------------------------------------------------------------------------
+  slack (MET)                                                        0.00
+
+
+1

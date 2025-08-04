@@ -1,0 +1,52 @@
+ 
+****************************************
+Report : timing
+        -path full
+        -delay max
+        -max_paths 1
+Design : Activation_mem_1
+Version: O-2018.06
+Date   : Tue Jul 29 03:04:32 2025
+****************************************
+
+Operating Conditions: slow   Library: slow
+Wire Load Model Mode: top
+
+  Startpoint: rd_addr[1] (input port clocked by clk)
+  Endpoint: activation_outputs[2]
+            (output port clocked by clk)
+  Path Group: clk
+  Path Type: max
+
+  Des/Clust/Port     Wire Load Model       Library
+  ------------------------------------------------
+  Activation_mem_1   tsmc090_wl10          slow
+
+  Point                                    Incr       Path
+  -----------------------------------------------------------
+  clock clk (rise edge)                    0.00       0.00
+  clock network delay (ideal)              0.10       0.10
+  input external delay                     0.50       0.60 r
+  rd_addr[1] (in)                          0.01       0.61 r
+  U35/Y (INVXL)                            0.19       0.79 f
+  U38/Y (NOR2XL)                           0.47       1.26 r
+  U22/Y (NAND2X1)                          0.60       1.85 f
+  U23/Y (CLKINVX6)                         0.53       2.38 r
+  U390/Y (AOI22XL)                         0.38       2.76 f
+  U293/Y (NAND4X4)                         0.30       3.06 r
+  activation_outputs[2] (out)              0.00       3.06 r
+  data arrival time                                   3.06
+
+  clock clk (rise edge)                    4.00       4.00
+  clock network delay (ideal)              0.10       4.10
+  clock uncertainty                       -0.50       3.60
+  output external delay                   -0.50       3.10
+  data required time                                  3.10
+  -----------------------------------------------------------
+  data required time                                  3.10
+  data arrival time                                  -3.06
+  -----------------------------------------------------------
+  slack (MET)                                         0.04
+
+
+1
