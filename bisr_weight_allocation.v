@@ -2,18 +2,14 @@ module bisr_weight_allocation #(
     parameter SYSTOLIC_SIZE = 8,
     parameter WEIGHT_WIDTH = 8,
     parameter ACTIVATION_WIDTH = 8,
-    parameter FAULTY_STORAGE_DEPTH = 8,
-    parameter ADDR_WIDTH = $clog2(SYSTOLIC_SIZE),
-    parameter STORAGE_ADDR_WIDTH = $clog2(FAULTY_STORAGE_DEPTH)
+    parameter ADDR_WIDTH = $clog2(SYSTOLIC_SIZE)
 )(
     input wire clk,
     input wire rst_n,
     
-    // eNVM 介面 - 使用攤平的一維向量
+    // eNVM 介面 - 簡化的輸入
     input wire envm_wr_en,
-    input wire [FAULTY_STORAGE_DEPTH*SYSTOLIC_SIZE-1:0] envm_faulty_patterns_flat,
-    input wire [FAULTY_STORAGE_DEPTH*ADDR_WIDTH-1:0] envm_faulty_row_addrs_flat,
-    input wire [FAULTY_STORAGE_DEPTH-1:0] envm_faulty_valid_mask,
+    input wire [SYSTOLIC_SIZE*SYSTOLIC_SIZE-1:0] envm_faulty_patterns_flat,
     
     // 權重輸入和配置介面
     input wire weight_start,                                    // 開始權重配置的信號
@@ -37,7 +33,7 @@ module bisr_weight_allocation #(
     // Internal signals
     wire [SYSTOLIC_SIZE-1:0] zero_weight_flags;
     wire [SYSTOLIC_SIZE-1:0] faulty_rows_mask;
-    wire [FAULTY_STORAGE_DEPTH-1:0] valid_bits_out;
+    wire [SYSTOLIC_SIZE-1:0] valid_bits_out;
     wire all_faulty_matched;
     wire allocation_failed;
     
@@ -94,18 +90,14 @@ module bisr_weight_allocation #(
     // Instantiate Faulty PE Storage
     faulty_pe_storage #(
         .SYSTOLIC_SIZE(SYSTOLIC_SIZE),
-        .FAULTY_STORAGE_DEPTH(FAULTY_STORAGE_DEPTH),
-        .STORAGE_ADDR_WIDTH(STORAGE_ADDR_WIDTH),
         .ADDR_WIDTH(ADDR_WIDTH)
     ) faulty_pe_inst (
         .clk(clk),
         .rst_n(rst_n),
         
-        // eNVM interface - 直接傳遞攤平向量
+        // eNVM interface - 簡化的輸入
         .wr_en(envm_wr_en),
         .faulty_patterns_flat(envm_faulty_patterns_flat),
-        .faulty_row_addrs_flat(envm_faulty_row_addrs_flat),
-        .faulty_valid_mask(envm_faulty_valid_mask),
         
         // Weight allocation interface
         .zero_weight_flags(zero_weight_flags),

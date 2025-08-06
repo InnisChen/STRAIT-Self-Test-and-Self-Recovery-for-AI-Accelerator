@@ -39,7 +39,7 @@ module mapping_table #(
     reg found_faulty_row;
     
     // 搜尋邏輯（組合邏輯）
-    integer i, j;
+    integer i;
     always @(*) begin
         selected_healthy_row = {ADDR_WIDTH{1'b0}};
         selected_faulty_row = {ADDR_WIDTH{1'b0}};
@@ -78,8 +78,8 @@ module mapping_table #(
             allocation_failed_reg <= 1'b0;
             envm_wr_en_delayed <= 1'b0;
             
-            for (j = 0; j < SYSTOLIC_SIZE; j=j+1) begin
-                mapping_table_reg[j] <= j; // 初始映射為自己
+            for (i = 0; i < SYSTOLIC_SIZE; i=i+1) begin
+                // mapping_table_reg[i] <= i; // 初始映射為自己
             end
         end
         else begin

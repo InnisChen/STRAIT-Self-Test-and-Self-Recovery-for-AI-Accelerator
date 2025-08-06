@@ -4,34 +4,26 @@ module tb_bisr_weight_allocation;
 parameter SYSTOLIC_SIZE = 4;
 parameter WEIGHT_WIDTH = 8;
 parameter ACTIVATION_WIDTH = 8;
-parameter FAULTY_STORAGE_DEPTH = 4;
 parameter ADDR_WIDTH = $clog2(SYSTOLIC_SIZE);
-parameter STORAGE_ADDR_WIDTH = $clog2(FAULTY_STORAGE_DEPTH);
 
 // ===============================================
 // 測試Pattern設定區域 - 可在此修改測試內容
 // ===============================================
 
-// 錯誤資訊設定 - 多個錯誤row的複雜情況
-parameter [FAULTY_STORAGE_DEPTH-1:0] TEST_FAULTY_VALID_MASK = 4'b0111;  // 前3個entry有效
-
-// 錯誤PE位置 (4-bit，每個bit代表該row中對應PE是否有錯誤)
-parameter [SYSTOLIC_SIZE-1:0] TEST_FAULTY_PATTERN_0 = 4'b1000;  // Row 0: PE[3]有錯誤
-parameter [SYSTOLIC_SIZE-1:0] TEST_FAULTY_PATTERN_1 = 4'b1010;  // Row 2: PE[3]和PE[1]有錯誤 (優先級較高)
-parameter [SYSTOLIC_SIZE-1:0] TEST_FAULTY_PATTERN_2 = 4'b0100;  // Row 3: PE[2]有錯誤
-parameter [SYSTOLIC_SIZE-1:0] TEST_FAULTY_PATTERN_3 = 4'b0000;  
-
-// 錯誤PE所在的row地址
-parameter [ADDR_WIDTH-1:0] TEST_FAULTY_ROW_ADDR_0 = 2'd0;  // 錯誤在Row 0
-parameter [ADDR_WIDTH-1:0] TEST_FAULTY_ROW_ADDR_1 = 2'd2;  // 錯誤在Row 2
-parameter [ADDR_WIDTH-1:0] TEST_FAULTY_ROW_ADDR_2 = 2'd3;  // 錯誤在Row 3
-parameter [ADDR_WIDTH-1:0] TEST_FAULTY_ROW_ADDR_3 = 2'd0;  
+// 錯誤資訊設定 - 使用攤平的一維向量
+// 格式: {Row3_pattern, Row2_pattern, Row1_pattern, Row0_pattern}
+parameter [SYSTOLIC_SIZE*SYSTOLIC_SIZE-1:0] TEST_FAULTY_PATTERNS_FLAT = {
+    4'b1010,  // Row 3
+    4'b0000,  // Row 2
+    4'b0010,  // Row 1
+    4'b0100   // Row 0
+};
 
 // 權重矩陣設定 (使用十進制，格式: {PE[3], PE[2], PE[1], PE[0]})
-parameter [SYSTOLIC_SIZE*WEIGHT_WIDTH-1:0] TEST_WEIGHT_ROW_0 = {8'd0, 8'd22, 8'd32, 8'd42}; // Row 0: 有錯誤，無零權重
-parameter [SYSTOLIC_SIZE*WEIGHT_WIDTH-1:0] TEST_WEIGHT_ROW_1 = {8'd0, 8'd23, 8'd0, 8'd43};   // Row 1: PE[3]=0, PE[1]=0 可匹配Row 2錯誤
-parameter [SYSTOLIC_SIZE*WEIGHT_WIDTH-1:0] TEST_WEIGHT_ROW_2 = {8'd14, 8'd24, 8'd34, 8'd44}; // Row 2: 有錯誤
-parameter [SYSTOLIC_SIZE*WEIGHT_WIDTH-1:0] TEST_WEIGHT_ROW_3 = {8'd15, 8'd0, 8'd35, 8'd45}; // Row 3: 有錯誤
+parameter [SYSTOLIC_SIZE*WEIGHT_WIDTH-1:0] TEST_WEIGHT_ROW_0 = {8'd0, 8'd22, 8'd0, 8'd42};      // Row 0
+parameter [SYSTOLIC_SIZE*WEIGHT_WIDTH-1:0] TEST_WEIGHT_ROW_1 = {8'd13, 8'd23, 8'd0, 8'd43};     // Row 1
+parameter [SYSTOLIC_SIZE*WEIGHT_WIDTH-1:0] TEST_WEIGHT_ROW_2 = {8'd14, 8'd24, 8'd34, 8'd44};    // Row 2
+parameter [SYSTOLIC_SIZE*WEIGHT_WIDTH-1:0] TEST_WEIGHT_ROW_3 = {8'd15, 8'd0, 8'd35, 8'd45};     // Row 3
 
 // ===============================================
 // 以下為測試邏輯，一般不需要修改
@@ -41,11 +33,9 @@ parameter [SYSTOLIC_SIZE*WEIGHT_WIDTH-1:0] TEST_WEIGHT_ROW_3 = {8'd15, 8'd0, 8'd
 reg clk;
 reg rst_n;
 
-// eNVM Interface
+// eNVM Interface - 簡化為單一攤平向量
 reg envm_wr_en;
-reg [SYSTOLIC_SIZE-1:0] envm_faulty_patterns [FAULTY_STORAGE_DEPTH-1:0];
-reg [ADDR_WIDTH-1:0] envm_faulty_row_addrs [FAULTY_STORAGE_DEPTH-1:0];
-reg [FAULTY_STORAGE_DEPTH-1:0] envm_faulty_valid_mask;
+reg [SYSTOLIC_SIZE*SYSTOLIC_SIZE-1:0] envm_faulty_patterns_flat;
 
 // Weight Input Interface
 reg weight_start;
@@ -75,15 +65,12 @@ end
 bisr_weight_allocation #(
     .SYSTOLIC_SIZE(SYSTOLIC_SIZE),
     .WEIGHT_WIDTH(WEIGHT_WIDTH),
-    .ACTIVATION_WIDTH(ACTIVATION_WIDTH),
-    .FAULTY_STORAGE_DEPTH(FAULTY_STORAGE_DEPTH)
+    .ACTIVATION_WIDTH(ACTIVATION_WIDTH)
 ) dut (
     .clk(clk),
     .rst_n(rst_n),
     .envm_wr_en(envm_wr_en),
-    .envm_faulty_patterns(envm_faulty_patterns),
-    .envm_faulty_row_addrs(envm_faulty_row_addrs),
-    .envm_faulty_valid_mask(envm_faulty_valid_mask),
+    .envm_faulty_patterns_flat(envm_faulty_patterns_flat),
     .weight_start(weight_start),
     .input_weights(input_weights),
     .weight_valid(weight_valid),
@@ -102,18 +89,8 @@ initial begin
     test_weights[2] = TEST_WEIGHT_ROW_2;
     test_weights[3] = TEST_WEIGHT_ROW_3;
     
-    // 載入錯誤資訊
-    envm_faulty_patterns[0] = TEST_FAULTY_PATTERN_0;
-    envm_faulty_patterns[1] = TEST_FAULTY_PATTERN_1;
-    envm_faulty_patterns[2] = TEST_FAULTY_PATTERN_2;
-    envm_faulty_patterns[3] = TEST_FAULTY_PATTERN_3;
-    
-    envm_faulty_row_addrs[0] = TEST_FAULTY_ROW_ADDR_0;
-    envm_faulty_row_addrs[1] = TEST_FAULTY_ROW_ADDR_1;
-    envm_faulty_row_addrs[2] = TEST_FAULTY_ROW_ADDR_2;
-    envm_faulty_row_addrs[3] = TEST_FAULTY_ROW_ADDR_3;
-    
-    envm_faulty_valid_mask = TEST_FAULTY_VALID_MASK;
+    // 載入錯誤資訊 - 使用攤平向量
+    envm_faulty_patterns_flat = TEST_FAULTY_PATTERNS_FLAT;
 end
 
 // Main test sequence
@@ -124,6 +101,7 @@ initial begin
     // Initialize signals
     rst_n = 1;
     envm_wr_en = 0;
+    // envm_faulty_patterns_flat = 0;
     weight_start = 0;
     weight_valid = 0;
     input_weights = 0;
@@ -132,14 +110,13 @@ initial begin
     // Reset sequence
     $display("=====================================");
     $display("BISR Weight Allocation Testbench");
-    $display("SYSTOLIC_SIZE = %0d, FAULTY_STORAGE_DEPTH = %0d", SYSTOLIC_SIZE, FAULTY_STORAGE_DEPTH);
+    $display("SYSTOLIC_SIZE = %0d", SYSTOLIC_SIZE);
     $display("=====================================");
     
     #10;      // Half cycle delay
     rst_n = 0; // Assert reset (active low)
     #10;       // Hold reset for one cycle
     rst_n = 1; // Deassert reset
-    //#5;        // 縮短重置後等待時間
     
     // 顯示測試設定
     display_test_setup();
@@ -173,14 +150,14 @@ begin
     // 顯示錯誤資訊
     $display("");
     $display("Faulty Information:");
-    $display("Valid Mask: %b", envm_faulty_valid_mask);
-    for (i = 0; i < FAULTY_STORAGE_DEPTH; i++) begin
-        if (envm_faulty_valid_mask[i]) begin
-            $display("  Entry[%0d]: Row %0d, Pattern = %b (PE[3]=%b, PE[2]=%b, PE[1]=%b, PE[0]=%b)", 
-                    i, envm_faulty_row_addrs[i], envm_faulty_patterns[i],
-                    envm_faulty_patterns[i][3], envm_faulty_patterns[i][2], 
-                    envm_faulty_patterns[i][1], envm_faulty_patterns[i][0]);
-        end
+    $display("Faulty Patterns Flat: %b", envm_faulty_patterns_flat);
+    for (i = 0; i < SYSTOLIC_SIZE; i++) begin
+        $display("  Row %0d Pattern: %b (PE[3]=%b, PE[2]=%b, PE[1]=%b, PE[0]=%b)", 
+                i, envm_faulty_patterns_flat[i*SYSTOLIC_SIZE +: SYSTOLIC_SIZE],
+                envm_faulty_patterns_flat[i*SYSTOLIC_SIZE + 3], 
+                envm_faulty_patterns_flat[i*SYSTOLIC_SIZE + 2],
+                envm_faulty_patterns_flat[i*SYSTOLIC_SIZE + 1], 
+                envm_faulty_patterns_flat[i*SYSTOLIC_SIZE + 0]);
     end
 end
 endtask
@@ -228,7 +205,6 @@ begin
     weight_start = 0;
     
     // 連續4個cycle送權重，weight_valid保持高電平
-    //@(negedge clk);
     weight_valid = 1;  // 拉高 weight_valid，保持4個cycle
     
     // 逐一輸入4個權重row
