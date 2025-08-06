@@ -1,3 +1,4 @@
+// 輸入沒攤平直接給內部reg  (合看看面積會不會不一樣)
 module Systolic_array #(
     parameter SYSTOLIC_SIZE = 8,
     parameter WEIGHT_WIDTH = 8,

@@ -1,5 +1,5 @@
 // Systolic_array.v
-
+// 輸入先攤平
 module Systolic_array #(
     parameter SYSTOLIC_SIZE = 8,
     parameter WEIGHT_WIDTH = 8,

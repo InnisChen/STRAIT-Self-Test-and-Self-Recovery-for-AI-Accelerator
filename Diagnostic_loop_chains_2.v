@@ -1,18 +1,21 @@
 //Parameterized Diagnostic_loop_chains
 
 module Diagnostic_loop_chains #(
-    parameter SYSTOLIC_SIZE = 8  // 可設定的脈動陣列大小，預設為8x8
+    parameter SYSTOLIC_SIZE = 8,  // 可設定的脈動陣列大小，預設為8x8
+    parameter ADDR_WIDTH = $clog2(SYSTOLIC_SIZE)    //counter的位寬
 )(
     input clk,
     input rst_n,
+    input start_en,
     input [SYSTOLIC_SIZE-1:0] col_inputs,  // 使用向量輸入，大小可變
     output [SYSTOLIC_SIZE-1:0] column_fault_detection,  // 每個column的fault檢測輸出
     output [SYSTOLIC_SIZE-1:0] row_fault_detection,  // 每個row的fault檢測輸出
+    output [SYSTOLIC_SIZE-1:0] single_pe_detection, //單row pe輸出
 
-    output [SYSTOLIC_SIZE-1:0] pe_detection //單row pe輸出
+    output reg [ADDR_WIDTH-1:0] counter //輸出給envm讀取第幾個row的錯誤資訊，因envm 沒有rst沒辦法rst counter 訊號
 );
     //看cycle修正要輸出哪一列的PE(or gate後面 或 第一個reg後)
-    assign pe_detection = col_0;
+    assign single_pe_detection = col_0;
 
     // 動態宣告線路和暫存器
     wire [SYSTOLIC_SIZE-1:0] col_0;  // 每個column的第0級輸出
@@ -37,13 +40,14 @@ module Diagnostic_loop_chains #(
                         col_reg[k][i] <= 1'b0;
                     end
                 end
-                else begin
+                else if(start_en) begin
                     // 建立移位暫存器鏈
                     col_reg[0][i] <= col_0[i];
                     for (k = 1; k < SYSTOLIC_SIZE; k = k + 1) begin
                         col_reg[k][i] <= col_reg[k-1][i];
                     end
                 end
+                else;
             end
         end
     endgenerate
@@ -65,12 +69,13 @@ module Diagnostic_loop_chains #(
                 row_detect_reg[k] <= 1'b0;
             end
         end
-        else begin
+        else if(start_en) begin
             row_detect_reg[0] <= row_detect_0;
             for (k = 1; k < SYSTOLIC_SIZE; k = k + 1) begin
                 row_detect_reg[k] <= row_detect_reg[k-1];
             end
         end
+        else;
     end
 
     // Column fault detector
@@ -91,11 +96,27 @@ module Diagnostic_loop_chains #(
                 column_detect[k] <= 1'b0;
             end
         end
-        else begin
+        else if(start_en) begin
             for (k = 0; k < SYSTOLIC_SIZE; k = k + 1) begin
                 column_detect[k] <= col_and_result[k];
             end
         end
+        else;
+    end
+
+    always @(posedge clk , negedge rst_n) begin
+        if(!rst_n) begin
+            counter <= {ADDR_WIDTH{1'b0}};
+        end
+        else if(start_en) begin
+            if(counter == SYSTOLIC_SIZE - 1) begin
+                counter <= {ADDR_WIDTH{1'b0}}; // Reset counter to 0
+            end
+            else begin
+                counter <= counter + 1; // Increment counter
+            end
+        end
+        else;
     end
 
     // 輸出信號連接
