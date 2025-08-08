@@ -6,6 +6,40 @@ module Comparator #(
     parameter ACTIVATION_WIDTH = 8,
     parameter PARTIAL_SUM_WIDTH = WEIGHT_WIDTH + ACTIVATION_WIDTH + $clog2(SYSTOLIC_SIZE),
 ) (
+    input [PARTIAL_SUM_WIDTH-1:0] correct_answer,
+    input [PARTIAL_SUM_WIDTH*SYSTOLIC_SIZE-1:0] partial_sum_flat,
+    output [SYSTOLIC_SIZE-1:0] comparaed_results
+);
+    // reg [PARTIAL_SUM_WIDTH-1:0] compare_xor [0:SYSTOLIC_SIZE-1];
+    reg [PARTIAL_SUM_WIDTH-1:0] partial_sum [0:SYSTOLIC_SIZE-1];
+
+    genvar i;
+
+    // 解攤平
+    generate
+        for (i = 0; i < SYSTOLIC_SIZE; i = i + 1) begin : partial_sum_io_conversion
+            assign partial_sum[i] = partial_sum_flat[i*PARTIAL_SUM_WIDTH +: PARTIAL_SUM_WIDTH];
+        end
+    endgenerate
+
+    generate
+        for (i = 0; i < SYSTOLIC_SIZE; i = i + 1) begin : comparaed_results_gen
+            assign comparaed_results[i] = |(correct_answer ^ partial_sum[i]);
+        end
+    endgenerate
+    
+endmodule
+
+
+
+/*
+
+module Comparator #(
+    parameter SYSTOLIC_SIZE = 8,
+    parameter WEIGHT_WIDTH = 8,
+    parameter ACTIVATION_WIDTH = 8,
+    parameter PARTIAL_SUM_WIDTH = WEIGHT_WIDTH + ACTIVATION_WIDTH + $clog2(SYSTOLIC_SIZE),
+) (
     input clk,
     input rst_n,
     input [PARTIAL_SUM_WIDTH-1:0] correct_answer,
@@ -16,10 +50,10 @@ module Comparator #(
     reg [PARTIAL_SUM_WIDTH-1:0] partial_sum [0:SYSTOLIC_SIZE-1];
 
     genvar i;
-    integer i;
+    integer k;
 
     // 解攤平
-    generate
+    generate    
         for (i = 0; i < SYSTOLIC_SIZE; i = i + 1) begin : partial_sum_io_conversion
             assign partial_sum[i] = partial_sum_flat[i*PARTIAL_SUM_WIDTH +: PARTIAL_SUM_WIDTH];
         end
@@ -28,13 +62,13 @@ module Comparator #(
     //可以考慮是否要clk，還是純組合邏輯
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            for (i = 0; i < SYSTOLIC_SIZE; i = i + 1) begin
-                compare_xor[i] <= 0;
+            for (k = 0; k < SYSTOLIC_SIZE; k = k + 1) begin
+                compare_xor[k] <= 0;
             end
         end 
         else begin
-            for (i = 0; i < SYSTOLIC_SIZE; i = i + 1) begin
-                compare_xor[i] <= correct_answer ^ partial_sum[i];
+            for (k = 0; k < SYSTOLIC_SIZE; k = k + 1) begin
+                compare_xor[k] <= correct_answer ^ partial_sum[k];
             end
         end
     end
@@ -46,3 +80,5 @@ module Comparator #(
     endgenerate
     
 endmodule
+
+*/
