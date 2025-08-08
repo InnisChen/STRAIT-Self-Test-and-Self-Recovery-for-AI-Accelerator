@@ -1,4 +1,5 @@
 // Buffer.v
+// use generate
 
 module Buffer #(
     parameter SYSTOLIC_SIZE = 8,
@@ -58,6 +59,7 @@ endmodule
 
 
 // // Buffer.v
+// // 爆開
 
 // module Buffer #(
 //     parameter SYSTOLIC_SIZE = 8,  // 可設定的脈動陣列大小，預設為8x8

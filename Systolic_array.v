@@ -6,8 +6,10 @@ module Systolic_array #(
     parameter ACTIVATION_WIDTH = 8,
     parameter PARTIAL_SUM_WIDTH = WEIGHT_WIDTH + ACTIVATION_WIDTH + $clog2(SYSTOLIC_SIZE)
 )(
-    input clk, rst_n, scan_en,
+    input clk,
     input clk_w,
+    input rst_n,
+    input scan_en,
     input [SYSTOLIC_SIZE-1:0] PE_disable,
     input [SYSTOLIC_SIZE*WEIGHT_WIDTH-1:0] weight_flat,
     input [SYSTOLIC_SIZE*ACTIVATION_WIDTH-1:0] activation_flat,

@@ -25,7 +25,6 @@ module eNVM #(
     input column_fault_detection,   //....
 
     output [SYSTOLIC_SIZE*SYSTOLIC_SIZE-1:0] envm_faulty_patterns_flat,
-
     output [WEIGHT_WIDTH-1:0] Scan_data_weight,
     output [ACTIVATION_WIDTH-1:0] Scan_data_activation,
     output [PARTIAL_SUM_WIDTH-1:0] Scan_data_answer
