@@ -30,7 +30,7 @@ module eNVM #(
     output [ACTIVATION_WIDTH-1:0] Scan_data_activation,
     output [PARTIAL_SUM_WIDTH-1:0] Scan_data_answer
 );
-    //Scan data
+    //Scan data (test_bench 直接送)
     reg [WEIGHT_WIDTH-1:0] SA_Scan_data_weight_reg [0:SA_TEST_PATTERN_DEPTH-1];
     reg [ACTIVATION_WIDTH-1:0] SA_Scan_data_activation_reg [0:SA_TEST_PATTERN_DEPTH-1];
     reg [PARTIAL_SUM_WIDTH-1:0] SA_Scan_data_answer_reg [0:SA_TEST_PATTERN_DEPTH-1];

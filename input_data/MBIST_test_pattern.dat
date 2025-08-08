@@ -1,0 +1,28 @@
+// MBIST Test Patterns for Memory Data Generator
+// Based on March C- Algorithm
+// Format: 19-bit binary data (PARTIAL_SUM_WIDTH)
+// Pattern Index | Description | Binary Pattern
+
+// Pattern 0: All zeros (Background)
+0000000000000000000
+
+// Pattern 1: All ones (Inverted background)
+1111111111111111111
+
+// Pattern 2: Alternating pattern 01010... (Coupling faults)
+0101010101010101010
+
+// Pattern 3: Alternating pattern 10101... (Inverted coupling)
+1010101010101010101
+
+// Pattern 4: All zeros (Repeated for march algorithm)
+0000000000000000000
+
+// Pattern 5: All ones (Repeated for march algorithm)
+1111111111111111111
+
+// Pattern 6: Walking 1s pattern (Address-based pattern)
+0000000000000000001
+
+// Pattern 7: Walking 0s pattern (Inverted address-based)
+1111111111111111110

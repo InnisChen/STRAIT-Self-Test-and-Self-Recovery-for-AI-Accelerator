@@ -11,15 +11,15 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="28.084 ns"></ZoomStartTime>
-      <ZoomEndTime time="165.385 ns"></ZoomEndTime>
+      <ZoomStartTime time="41.000 ns"></ZoomStartTime>
+      <ZoomEndTime time="177.801 ns"></ZoomEndTime>
       <Cursor1Time time="155.000 ns"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
       <NameColumnWidth column_width="342"></NameColumnWidth>
-      <ValueColumnWidth column_width="195"></ValueColumnWidth>
+      <ValueColumnWidth column_width="189"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="107" />
+   <WVObjectSize size="94" />
    <wave_markers>
       <marker time="45000" label="" />
    </wave_markers>
@@ -40,21 +40,6 @@
    <wvobject fp_name="/tb_bisr_weight_allocation/weight_start" type="logic">
       <obj_property name="ElementShortName">weight_start</obj_property>
       <obj_property name="ObjectShortName">weight_start</obj_property>
-   </wvobject>
-   <wvobject fp_name="/tb_bisr_weight_allocation/envm_faulty_patterns" type="array">
-      <obj_property name="ElementShortName">envm_faulty_patterns[3:0][3:0]</obj_property>
-      <obj_property name="ObjectShortName">envm_faulty_patterns[3:0][3:0]</obj_property>
-      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
-   </wvobject>
-   <wvobject fp_name="/tb_bisr_weight_allocation/envm_faulty_row_addrs" type="array">
-      <obj_property name="ElementShortName">envm_faulty_row_addrs[3:0][1:0]</obj_property>
-      <obj_property name="ObjectShortName">envm_faulty_row_addrs[3:0][1:0]</obj_property>
-      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
-   </wvobject>
-   <wvobject fp_name="/tb_bisr_weight_allocation/envm_faulty_valid_mask" type="array">
-      <obj_property name="ElementShortName">envm_faulty_valid_mask[3:0]</obj_property>
-      <obj_property name="ObjectShortName">envm_faulty_valid_mask[3:0]</obj_property>
-      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
    </wvobject>
    <wvobject fp_name="/tb_bisr_weight_allocation/input_weights" type="array">
       <obj_property name="ElementShortName">input_weights[31:0]</obj_property>
@@ -110,18 +95,6 @@
    <wvobject fp_name="/tb_bisr_weight_allocation/dut/envm_wr_en" type="logic">
       <obj_property name="ElementShortName">envm_wr_en</obj_property>
       <obj_property name="ObjectShortName">envm_wr_en</obj_property>
-   </wvobject>
-   <wvobject fp_name="/tb_bisr_weight_allocation/dut/envm_faulty_patterns" type="array">
-      <obj_property name="ElementShortName">envm_faulty_patterns[3:0][3:0]</obj_property>
-      <obj_property name="ObjectShortName">envm_faulty_patterns[3:0][3:0]</obj_property>
-   </wvobject>
-   <wvobject fp_name="/tb_bisr_weight_allocation/dut/envm_faulty_row_addrs" type="array">
-      <obj_property name="ElementShortName">envm_faulty_row_addrs[3:0][1:0]</obj_property>
-      <obj_property name="ObjectShortName">envm_faulty_row_addrs[3:0][1:0]</obj_property>
-   </wvobject>
-   <wvobject fp_name="/tb_bisr_weight_allocation/dut/envm_faulty_valid_mask" type="array">
-      <obj_property name="ElementShortName">envm_faulty_valid_mask[3:0]</obj_property>
-      <obj_property name="ObjectShortName">envm_faulty_valid_mask[3:0]</obj_property>
    </wvobject>
    <wvobject fp_name="/tb_bisr_weight_allocation/dut/weight_start" type="logic">
       <obj_property name="ElementShortName">weight_start</obj_property>
@@ -222,18 +195,8 @@
       <obj_property name="ObjectShortName">wr_en</obj_property>
    </wvobject>
    <wvobject fp_name="/tb_bisr_weight_allocation/dut/faulty_pe_inst/faulty_patterns" type="array">
-      <obj_property name="ElementShortName">faulty_patterns[3:0][3:0]</obj_property>
-      <obj_property name="ObjectShortName">faulty_patterns[3:0][3:0]</obj_property>
-      <obj_property name="Radix">BINARYRADIX</obj_property>
-   </wvobject>
-   <wvobject fp_name="/tb_bisr_weight_allocation/dut/faulty_pe_inst/faulty_row_addrs" type="array">
-      <obj_property name="ElementShortName">faulty_row_addrs[3:0][1:0]</obj_property>
-      <obj_property name="ObjectShortName">faulty_row_addrs[3:0][1:0]</obj_property>
-      <obj_property name="Radix">BINARYRADIX</obj_property>
-   </wvobject>
-   <wvobject fp_name="/tb_bisr_weight_allocation/dut/faulty_pe_inst/faulty_valid_mask" type="array">
-      <obj_property name="ElementShortName">faulty_valid_mask[3:0]</obj_property>
-      <obj_property name="ObjectShortName">faulty_valid_mask[3:0]</obj_property>
+      <obj_property name="ElementShortName">faulty_patterns[0:3][3:0]</obj_property>
+      <obj_property name="ObjectShortName">faulty_patterns[0:3][3:0]</obj_property>
       <obj_property name="Radix">BINARYRADIX</obj_property>
    </wvobject>
    <wvobject fp_name="/tb_bisr_weight_allocation/dut/faulty_pe_inst/zero_weight_flags" type="array">
@@ -278,19 +241,14 @@
       <obj_property name="ObjectShortName">all_faulty_matched</obj_property>
    </wvobject>
    <wvobject fp_name="/tb_bisr_weight_allocation/dut/faulty_pe_inst/faulty_storage" type="array">
-      <obj_property name="ElementShortName">faulty_storage[3:0][3:0]</obj_property>
-      <obj_property name="ObjectShortName">faulty_storage[3:0][3:0]</obj_property>
-      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
-   </wvobject>
-   <wvobject fp_name="/tb_bisr_weight_allocation/dut/faulty_pe_inst/row_addr_storage" type="array">
-      <obj_property name="ElementShortName">row_addr_storage[3:0][1:0]</obj_property>
-      <obj_property name="ObjectShortName">row_addr_storage[3:0][1:0]</obj_property>
+      <obj_property name="ElementShortName">faulty_storage[0:3][3:0]</obj_property>
+      <obj_property name="ObjectShortName">faulty_storage[0:3][3:0]</obj_property>
       <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
    </wvobject>
    <wvobject fp_name="/tb_bisr_weight_allocation/dut/faulty_pe_inst/valid_storage" type="array">
       <obj_property name="ElementShortName">valid_storage[3:0]</obj_property>
       <obj_property name="ObjectShortName">valid_storage[3:0]</obj_property>
-      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+      <obj_property name="Radix">BINARYRADIX</obj_property>
    </wvobject>
    <wvobject fp_name="/tb_bisr_weight_allocation/dut/faulty_pe_inst/faulty_rows_info" type="array">
       <obj_property name="ElementShortName">faulty_rows_info[3:0]</obj_property>
@@ -323,28 +281,8 @@
       <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
    </wvobject>
    <wvobject fp_name="/tb_bisr_weight_allocation/dut/faulty_pe_inst/match_count" type="array">
-      <obj_property name="ElementShortName">match_count[3:0][2:0]</obj_property>
-      <obj_property name="ObjectShortName">match_count[3:0][2:0]</obj_property>
-      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
-   </wvobject>
-   <wvobject fp_name="/tb_bisr_weight_allocation/dut/faulty_pe_inst/\precise_matching[0].match_result " type="array">
-      <obj_property name="ElementShortName">\precise_matching[0].match_result [3:0]</obj_property>
-      <obj_property name="ObjectShortName">\precise_matching[0].match_result [3:0]</obj_property>
-      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
-   </wvobject>
-   <wvobject fp_name="/tb_bisr_weight_allocation/dut/faulty_pe_inst/\precise_matching[1].match_result " type="array">
-      <obj_property name="ElementShortName">\precise_matching[1].match_result [3:0]</obj_property>
-      <obj_property name="ObjectShortName">\precise_matching[1].match_result [3:0]</obj_property>
-      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
-   </wvobject>
-   <wvobject fp_name="/tb_bisr_weight_allocation/dut/faulty_pe_inst/\precise_matching[2].match_result " type="array">
-      <obj_property name="ElementShortName">\precise_matching[2].match_result [3:0]</obj_property>
-      <obj_property name="ObjectShortName">\precise_matching[2].match_result [3:0]</obj_property>
-      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
-   </wvobject>
-   <wvobject fp_name="/tb_bisr_weight_allocation/dut/faulty_pe_inst/\precise_matching[3].match_result " type="array">
-      <obj_property name="ElementShortName">\precise_matching[3].match_result [3:0]</obj_property>
-      <obj_property name="ObjectShortName">\precise_matching[3].match_result [3:0]</obj_property>
+      <obj_property name="ElementShortName">match_count[0:3][2:0]</obj_property>
+      <obj_property name="ObjectShortName">match_count[0:3][2:0]</obj_property>
       <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
    </wvobject>
    <wvobject fp_name="/tb_bisr_weight_allocation/dut/faulty_pe_inst/max_match_count" type="array">
@@ -435,36 +373,12 @@
       <obj_property name="UseCustomSignalColor">true</obj_property>
    </wvobject>
    <wvobject fp_name="/tb_bisr_weight_allocation/dut/mapping_inst/mapping_table_reg" type="array">
-      <obj_property name="ElementShortName">mapping_table_reg[3:0][1:0]</obj_property>
-      <obj_property name="ObjectShortName">mapping_table_reg[3:0][1:0]</obj_property>
+      <obj_property name="ElementShortName">mapping_table_reg[0:3][1:0]</obj_property>
+      <obj_property name="ObjectShortName">mapping_table_reg[0:3][1:0]</obj_property>
       <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
       <obj_property name="CustomSignalColor">#FFD700</obj_property>
       <obj_property name="UseCustomSignalColor">true</obj_property>
       <obj_property name="isExpanded"></obj_property>
-      <wvobject fp_name="/tb_bisr_weight_allocation/dut/mapping_inst/mapping_table_reg[3]" type="array">
-         <obj_property name="ElementShortName">[3][1:0]</obj_property>
-         <obj_property name="ObjectShortName">[3][1:0]</obj_property>
-         <obj_property name="CustomSignalColor">#FFD700</obj_property>
-         <obj_property name="UseCustomSignalColor">true</obj_property>
-      </wvobject>
-      <wvobject fp_name="/tb_bisr_weight_allocation/dut/mapping_inst/mapping_table_reg[2]" type="array">
-         <obj_property name="ElementShortName">[2][1:0]</obj_property>
-         <obj_property name="ObjectShortName">[2][1:0]</obj_property>
-         <obj_property name="CustomSignalColor">#FFD700</obj_property>
-         <obj_property name="UseCustomSignalColor">true</obj_property>
-      </wvobject>
-      <wvobject fp_name="/tb_bisr_weight_allocation/dut/mapping_inst/mapping_table_reg[1]" type="array">
-         <obj_property name="ElementShortName">[1][1:0]</obj_property>
-         <obj_property name="ObjectShortName">[1][1:0]</obj_property>
-         <obj_property name="CustomSignalColor">#FFD700</obj_property>
-         <obj_property name="UseCustomSignalColor">true</obj_property>
-      </wvobject>
-      <wvobject fp_name="/tb_bisr_weight_allocation/dut/mapping_inst/mapping_table_reg[0]" type="array">
-         <obj_property name="ElementShortName">[0][1:0]</obj_property>
-         <obj_property name="ObjectShortName">[0][1:0]</obj_property>
-         <obj_property name="CustomSignalColor">#FFD700</obj_property>
-         <obj_property name="UseCustomSignalColor">true</obj_property>
-      </wvobject>
    </wvobject>
    <wvobject fp_name="/tb_bisr_weight_allocation/dut/mapping_inst/faulty_checker_initialized" type="logic">
       <obj_property name="ElementShortName">faulty_checker_initialized</obj_property>
@@ -533,8 +447,8 @@
       <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
    </wvobject>
    <wvobject fp_name="/tb_bisr_weight_allocation/dut/weight_storage_inst/weight_memory" type="array">
-      <obj_property name="ElementShortName">weight_memory[3:0][31:0]</obj_property>
-      <obj_property name="ObjectShortName">weight_memory[3:0][31:0]</obj_property>
+      <obj_property name="ElementShortName">weight_memory[0:3][31:0]</obj_property>
+      <obj_property name="ObjectShortName">weight_memory[0:3][31:0]</obj_property>
       <obj_property name="Radix">HEXRADIX</obj_property>
    </wvobject>
 </wave_config>

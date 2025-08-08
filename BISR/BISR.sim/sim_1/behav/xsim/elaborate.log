@@ -7,8 +7,8 @@ Starting static elaboration
 Pass Through NonSizing Optimizer
 Completed static elaboration
 Starting simulation data flow analysis
-WARNING: [XSIM 43-4100] "C:/Project/STRAIT/BISR/BISR/BISR.sim/sim_1/behav/xsim/glbl.v" Line 6. Module glbl has a timescale but at least one module in design doesn't have timescale.
-WARNING: [XSIM 43-4100] "C:/Project/STRAIT/BISR/BISR/BISR.sim/sim_1/behav/xsim/glbl.v" Line 6. Module glbl has a timescale but at least one module in design doesn't have timescale.
+WARNING: [XSIM 43-4100] "C:/Project/STRAIT/BISR/BISR.sim/sim_1/behav/xsim/glbl.v" Line 6. Module glbl has a timescale but at least one module in design doesn't have timescale.
+WARNING: [XSIM 43-4100] "C:/Project/STRAIT/BISR/BISR.sim/sim_1/behav/xsim/glbl.v" Line 6. Module glbl has a timescale but at least one module in design doesn't have timescale.
 Completed simulation data flow analysis
 Time Resolution for simulation is 1ps
 Compiling module xil_defaultlib.faulty_pe_storage(SYSTOLIC_SIZE=...
