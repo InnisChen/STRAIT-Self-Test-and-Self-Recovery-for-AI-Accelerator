@@ -5,6 +5,11 @@
     "endgenerate",
     "posedge",
     "negedge",
-    "endmodule"
+    "endmodule",
+    "BIST",
+    "MBIST",
+    "LBIST",
+    "BISR",
+    "envm"
   ]
 }

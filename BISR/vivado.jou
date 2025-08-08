@@ -3,25 +3,18 @@
 # SW Build 4029153 on Fri Oct 13 20:14:34 MDT 2023
 # IP Build 4028589 on Sat Oct 14 00:45:43 MDT 2023
 # SharedData Build 4025554 on Tue Oct 10 17:18:54 MDT 2023
-# Start of session at: Wed Aug  6 14:56:03 2025
-# Process ID: 26468
+# Start of session at: Fri Aug  8 17:35:52 2025
+# Process ID: 19364
 # Current directory: C:/Project/STRAIT/BISR
-# Command line: vivado.exe -gui_launcher_event rodinguilauncherevent2280 C:\Project\STRAIT\BISR\BISR.xpr
+# Command line: vivado.exe -gui_launcher_event rodinguilauncherevent26528 C:\Project\STRAIT\BISR\BISR.xpr
 # Log file: C:/Project/STRAIT/BISR/vivado.log
 # Journal file: C:/Project/STRAIT/BISR\vivado.jou
 # Running On: Innis, OS: Windows, CPU Frequency: 2419 MHz, CPU Physical cores: 4, Host memory: 16873 MB
 #-----------------------------------------------------------
 start_gui
 open_project C:/Project/STRAIT/BISR/BISR.xpr
-update_compile_order -fileset sources_1
 launch_simulation
 open_wave_config C:/Project/STRAIT/BISR/tb_bisr_weight_allocation_behav.wcfg
 source tb_bisr_weight_allocation.tcl
-relaunch_sim
-relaunch_sim
-relaunch_sim
-relaunch_sim
-relaunch_sim
-relaunch_sim
-save_wave_config {C:/Project/STRAIT/BISR/tb_bisr_weight_allocation_behav.wcfg}
+update_compile_order -fileset sources_1
 close_sim

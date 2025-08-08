@@ -8,17 +8,20 @@ module Buffer #(
     input clk,
     input rst_n,
     input test_mode,    // 0: 正常模式45度, 1: 測試模式平行送入
-    input [SYSTOLIC_SIZE*ACTIVATION_WIDTH-1:0] activation_data,
-    output [ACTIVATION_WIDTH-1:0] activation_out [0:SYSTOLIC_SIZE-1]
+    input [SYSTOLIC_SIZE*ACTIVATION_WIDTH-1:0] activation_in_flat,
+
+    output [SYSTOLIC_SIZE*ACTIVATION_WIDTH-1:0] activation_out_flat
 );
 
     // 動態分解輸入數據
     wire [ACTIVATION_WIDTH-1:0] activation_in [0:SYSTOLIC_SIZE-1];
+    wire [ACTIVATION_WIDTH-1:0] activation_out [0:SYSTOLIC_SIZE-1];
     
     genvar k;
     generate
-        for (k = 0; k < SYSTOLIC_SIZE; k = k + 1) begin : input_split
-            assign activation_in[k] = activation_data[k*ACTIVATION_WIDTH +: ACTIVATION_WIDTH];
+        for (k = 0; k < SYSTOLIC_SIZE; k = k + 1) begin : in_out_split
+            assign activation_in[k] = activation_in_flat[k*ACTIVATION_WIDTH +: ACTIVATION_WIDTH];
+            assign activation_out_flat[k*ACTIVATION_WIDTH +: ACTIVATION_WIDTH] = activation_out[k];
         end
     endgenerate
 
@@ -26,7 +29,8 @@ module Buffer #(
     assign activation_out[0] = activation_in[0];
 
     // Row 1 到 Row (SYSTOLIC_SIZE-1): 每行宣告所需數量的registers
-    genvar i, j;
+    genvar i;
+    integer j;
     generate
         for (i = 1; i < SYSTOLIC_SIZE; i = i + 1) begin : row_gen
             // 第i行需要i個registers
@@ -68,20 +72,20 @@ endmodule
 //     input clk,
 //     input rst_n,
 //     input test_mode,    // 0: 正常模式45度, 1: 測試模式平行送入
-//     input [SYSTOLIC_SIZE*ACTIVATION_WIDTH-1:0] activation_data,
+//     input [SYSTOLIC_SIZE*ACTIVATION_WIDTH-1:0] activation_in_flat,
 //     output [ACTIVATION_WIDTH-1:0] activation_out [0:SYSTOLIC_SIZE-1]
 // );
 
 //     wire [ACTIVATION_WIDTH-1:0] activation_in [0:SYSTOLIC_SIZE-1];
 
-//     assign activation_in[0] = activation_data[0*ACTIVATION_WIDTH +: ACTIVATION_WIDTH];
-//     assign activation_in[1] = activation_data[1*ACTIVATION_WIDTH +: ACTIVATION_WIDTH];
-//     assign activation_in[2] = activation_data[2*ACTIVATION_WIDTH +: ACTIVATION_WIDTH];
-//     assign activation_in[3] = activation_data[3*ACTIVATION_WIDTH +: ACTIVATION_WIDTH];
-//     assign activation_in[4] = activation_data[4*ACTIVATION_WIDTH +: ACTIVATION_WIDTH];
-//     assign activation_in[5] = activation_data[5*ACTIVATION_WIDTH +: ACTIVATION_WIDTH];
-//     assign activation_in[6] = activation_data[6*ACTIVATION_WIDTH +: ACTIVATION_WIDTH];
-//     assign activation_in[7] = activation_data[7*ACTIVATION_WIDTH +: ACTIVATION_WIDTH];
+//     assign activation_in[0] = activation_in_flat[0*ACTIVATION_WIDTH +: ACTIVATION_WIDTH];
+//     assign activation_in[1] = activation_in_flat[1*ACTIVATION_WIDTH +: ACTIVATION_WIDTH];
+//     assign activation_in[2] = activation_in_flat[2*ACTIVATION_WIDTH +: ACTIVATION_WIDTH];
+//     assign activation_in[3] = activation_in_flat[3*ACTIVATION_WIDTH +: ACTIVATION_WIDTH];
+//     assign activation_in[4] = activation_in_flat[4*ACTIVATION_WIDTH +: ACTIVATION_WIDTH];
+//     assign activation_in[5] = activation_in_flat[5*ACTIVATION_WIDTH +: ACTIVATION_WIDTH];
+//     assign activation_in[6] = activation_in_flat[6*ACTIVATION_WIDTH +: ACTIVATION_WIDTH];
+//     assign activation_in[7] = activation_in_flat[7*ACTIVATION_WIDTH +: ACTIVATION_WIDTH];
 
 //     reg [ACTIVATION_WIDTH-1:0] reg_row1_0;
 //     reg [ACTIVATION_WIDTH-1:0] reg_row2_0,reg_row2_1;
