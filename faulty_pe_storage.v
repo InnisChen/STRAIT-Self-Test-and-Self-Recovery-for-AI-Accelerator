@@ -27,6 +27,9 @@ module faulty_pe_storage #(
     input wire [SYSTOLIC_SIZE-1:0] zero_weight_flags,  // 1: zero weight, 0: non-zero weight
     input wire weight_valid,
     input wire [ADDR_WIDTH-1:0] current_row_addr,     // 當前要處理的 row 地址
+
+    // 正常使用時，讀取錯誤資料給pe_disable
+    input wire [ADDR_WIDTH-1:0] read_addr, // 需要讀取的地址
     
     // Output to Mapping Table - 配置結果
     output reg match_success,                          // 步驟2,3配置成功
@@ -35,6 +38,9 @@ module faulty_pe_storage #(
     
     // 輸出給 Mapping Table 的初始化資訊
     output wire [SYSTOLIC_SIZE-1:0] faulty_rows_mask,  // 哪些 row 有故障
+
+    // 輸出錯誤資訊當作pe_disable
+    output wire [SYSTOLIC_SIZE-1:0] pe_disable_out, // 每個PE是否disable
     
     // 輸出給 Recovery result check 和 Mapping Table
     output wire [SYSTOLIC_SIZE-1:0] valid_bits_out,
@@ -171,5 +177,7 @@ module faulty_pe_storage #(
             match_failed <= 1'b0;
         end
     end
+
+    assign pe_disable_out = faulty_storage[read_addr]; // 根據讀取地址輸出 PE disable 狀態
 
 endmodule

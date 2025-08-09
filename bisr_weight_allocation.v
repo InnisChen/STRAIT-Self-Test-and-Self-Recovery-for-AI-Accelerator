@@ -21,8 +21,9 @@ module bisr_weight_allocation #(
     
     // 輸出給 Systolic Array
     output wire [SYSTOLIC_SIZE*WEIGHT_WIDTH-1:0] output_weights_flat,
+    output wire [SYSTOLIC_SIZE-1:0] pe_disable_out,
     
-    // 輸出給 Activation Buffer
+    // 輸出給 Activation Memory 找對應的 activation data
     output wire [ADDR_WIDTH-1:0] output_mapped_addr,
     
     // Recovery result (輸出給軟體)
@@ -103,6 +104,8 @@ module bisr_weight_allocation #(
         .zero_weight_flags(zero_weight_flags),
         .weight_valid(weight_valid),
         .current_row_addr(faulty_pe_addr),
+
+        .read_addr(read_addr),
         
         // Output to Mapping Table
         .match_success(match_success),
@@ -111,6 +114,8 @@ module bisr_weight_allocation #(
         
         // Initialization info to Mapping Table
         .faulty_rows_mask(faulty_rows_mask),
+
+        .pe_disable_out(pe_disable_out),
         
         // Output to Recovery result check and Mapping Table
         .valid_bits_out(valid_bits_out),

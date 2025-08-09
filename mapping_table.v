@@ -17,7 +17,7 @@ module mapping_table #(
     input wire envm_wr_en,                         // eNVM 寫入信號，用於初始化時機
     
     // Query interface (地址轉換)
-    input wire [ADDR_WIDTH-1:0] input_addr,
+    input wire [ADDR_WIDTH-1:0] read_addr,
     output wire [ADDR_WIDTH-1:0] mapped_addr,
     
     // Allocation status output
@@ -136,6 +136,6 @@ module mapping_table #(
     end
 
     // Query logic - 地址轉換（純組合邏輯）
-    assign mapped_addr = mapping_table_reg[input_addr];
+    assign mapped_addr = mapping_table_reg[read_addr];
 
 endmodule
