@@ -19,16 +19,32 @@ module hybrid_bist #(
     input BIST_mode,    // 0: MBIST, 1: LBIST
     
     // 與 eNVM 的介面
-    output reg test_type,                                   // 0: SA, 1: TD
+    output reg test_type,                                    // 0: SA, 1: TD
     output reg [MAX_PATTERN_ADDR_WIDTH-1:0] test_counter,   // eNVM pattern 索引
     output reg [1:0] td_pe_select,                          // TD 測試時的 PE 選擇 (0-3)
     input [WEIGHT_WIDTH-1:0] envm_weight,                   // 從 eNVM 來的權重
     input [ACTIVATION_WIDTH-1:0] envm_activation,           // 從 eNVM 來的激活
-    input [PARTIAL_SUM_WIDTH-1:0] envm_answer,              // 從 eNVM 來的預期結果
+    input [PARTIAL_SUM_WIDTH-1:0] envm_answer,             // 從 eNVM 來的預期結果
     
     // 控制 Systolic Array 的信號
     output reg scan_en,                                     // 掃描使能信號
     output reg [SYSTOLIC_SIZE-1:0] PE_disable,             // PE 禁用信號
+    
+    // 給 BISR 的權重控制信號
+    output reg [WEIGHT_WIDTH-1:0] weight_to_bisr,           // 給 BISR 的權重
+    output reg weight_valid,                                // 權重有效信號
+    output reg weight_start,                                // 開始權重配置信號
+    
+    // 給 Buffer 的激活控制信號  
+    output reg [ACTIVATION_WIDTH-1:0] activation_to_buffer, // 給 Buffer 的激活
+    output reg activation_valid,                            // 激活有效信號
+    
+    // 診斷電路控制信號
+    output reg diagnosis_en,                                // 診斷使能信號
+    output reg [ADDR_WIDTH-1:0] diagnosis_counter,          // 診斷計數器 (行/列索引)
+    output reg [SYSTOLIC_SIZE-1:0] single_pe_detection,     // 單個PE的錯誤檢測結果
+    output reg row_fault_detection,                         // 行錯誤檢測結果
+    output reg column_fault_detection,                      // 列錯誤檢測結果
     
     // Accumulator 控制信號 (MBIST + LBIST 共用)
     output reg acc_wr_en,                                   // Accumulator 寫使能  
@@ -41,7 +57,7 @@ module hybrid_bist #(
     // 測試結果
     output reg test_done,                                   // 測試完成
     output reg test_pass,                                   // 測試通過
-    output reg [SYSTOLIC_SIZE-1:0] fault_detected           // 檢測到的故障
+    output [SYSTOLIC_SIZE-1:0] compared_results         // 比較結果 (替代 fault_detected)
 );
 
     // 內部計數器
@@ -56,9 +72,6 @@ module hybrid_bist #(
     
     // Memory Data Generator 的輸出
     wire [PARTIAL_SUM_WIDTH-1:0] mbist_data;
-    
-    // Comparator 的輸出
-    wire [SYSTOLIC_SIZE-1:0] compared_results;
     
     // 狀態機定義
     typedef enum logic [3:0] {
@@ -306,8 +319,21 @@ module hybrid_bist #(
         td_pe_select = td_pe_counter;
         acc_wr_addr = memory_addr;
         acc_rd_addr = memory_addr;
-        acc_wr_data = {SYSTOLIC_SIZE{mbist_data}};  // 複製相同資料到所有位置
-        fault_detected = compared_results;
+        acc_wr_data = {SYSTOLIC_SIZE{mbist_data}};
+        
+        // BISR 和 Buffer 控制信號預設值
+        weight_to_bisr = {WEIGHT_WIDTH{1'b0}};
+        activation_to_buffer = {ACTIVATION_WIDTH{1'b0}};
+        weight_valid = 1'b0;
+        activation_valid = 1'b0;
+        weight_start = 1'b0;
+        
+        // 診斷電路控制信號預設值
+        diagnosis_en = 1'b0;
+        diagnosis_counter = {ADDR_WIDTH{1'b0}};
+        single_pe_detection = {SYSTOLIC_SIZE{1'b0}};
+        row_fault_detection = 1'b0;
+        column_fault_detection = 1'b0;
         
         case (current_state)
             MBIST_WRITE: begin
@@ -337,10 +363,21 @@ module hybrid_bist #(
                 end
             end
             
+            LBIST_START: begin
+                // 啟動權重配置
+                weight_start = 1'b1;
+            end
+            
             SA_SHIFT: begin
                 scan_en = 1'b1;
                 test_type = 1'b0;  // SA 測試
                 acc_test_mode = 1'b1;
+                
+                // 從 eNVM 獲取測試向量並送給 BISR 和 Buffer
+                weight_to_bisr = envm_weight;
+                activation_to_buffer = envm_activation;
+                weight_valid = 1'b1;
+                activation_valid = 1'b1;
             end
             
             SA_CAPTURE: begin
@@ -355,6 +392,17 @@ module hybrid_bist #(
                 // Pipeline: 檢查上個cycle設定地址的結果
                 test_pass = ~(|compared_results);
                 
+                // 診斷：將比較結果送給診斷電路
+                if (|compared_results) begin  // 有錯誤時啟動診斷
+                    diagnosis_en = 1'b1;
+                    diagnosis_counter = {ADDR_WIDTH{1'b0}};  // 目前測試的位置
+                    single_pe_detection = compared_results;   // PE級錯誤檢測結果
+                    
+                    // 簡單的行/列錯誤判斷邏輯
+                    row_fault_detection = &compared_results;     // 如果整行都錯，可能是行錯誤
+                    column_fault_detection = |compared_results;  // 如果有錯誤，可能包含列錯誤
+                end
+                
                 // 準備下個pattern的讀取（如果需要的話）
                 if (~(|compared_results) && pattern_counter < SA_TEST_PATTERN_DEPTH-1) begin
                     acc_rd_addr = {ADDR_WIDTH{1'b0}};
@@ -365,6 +413,12 @@ module hybrid_bist #(
                 scan_en = 1'b1;
                 test_type = 1'b1;  // TD 測試
                 acc_test_mode = 1'b1;
+                
+                // 從 eNVM 獲取測試向量並送給 BISR 和 Buffer
+                weight_to_bisr = envm_weight;
+                activation_to_buffer = envm_activation;
+                weight_valid = 1'b1;
+                activation_valid = 1'b1;
             end
             
             TD_LAUNCH: begin
@@ -391,6 +445,17 @@ module hybrid_bist #(
                 acc_test_mode = 1'b1;
                 // Pipeline: 檢查 Capture (C) 的結果
                 test_pass = ~(|compared_results);
+                
+                // 診斷：將比較結果送給診斷電路
+                if (|compared_results) begin  // 有錯誤時啟動診斷
+                    diagnosis_en = 1'b1;
+                    diagnosis_counter = td_pe_counter[ADDR_WIDTH-1:0];  // 目前測試的PE位置
+                    single_pe_detection = compared_results;             // PE級錯誤檢測結果
+                    
+                    // TD測試的行/列錯誤判斷邏輯
+                    row_fault_detection = &compared_results;     // 如果整行都錯
+                    column_fault_detection = |compared_results;  // 如果有錯誤
+                end
                 
                 // 準備下個測試的讀取地址
                 if (~(|compared_results)) begin
@@ -463,7 +528,7 @@ module hybrid_bist #(
     ) comparator_inst (
         .correct_answer(expected_data_reg),      // 預期結果
         .partial_sum_flat(acc_rd_data),         // 從 Accumulator 讀取的資料
-        .comparaed_results(compared_results)
+        .compared_results(compared_results)
     );
 
 endmodule

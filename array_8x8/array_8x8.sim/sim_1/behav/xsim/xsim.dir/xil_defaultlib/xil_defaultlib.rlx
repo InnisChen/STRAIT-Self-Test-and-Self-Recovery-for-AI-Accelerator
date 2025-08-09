@@ -1,8 +1,0 @@
-0.7
-2020.2
-Oct 13 2023
-20:47:58
-C:/Project/STRAIT/Array_8x8.v,1752372915,verilog,,C:/Project/STRAIT/PE_STRAIT.v,,PE_Array_8x8,,,,,,,,
-C:/Project/STRAIT/Array_8x8_tb.v,1752412855,verilog,,,,Array_8x8_tb,,,,,,,,
-C:/Project/STRAIT/PE_STRAIT.v,1752373129,verilog,,C:/Project/STRAIT/Array_8x8_tb.v,,MAC;STRAIT_PE,,,,,,,,
-C:/Project/STRAIT/array_8x8/array_8x8.sim/sim_1/behav/xsim/glbl.v,1697210495,verilog,,,,glbl,,,,,,,,
