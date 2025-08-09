@@ -26,9 +26,10 @@ module Accumulator #(
     ////////////////////////
     wire [PARTIAL_SUM_WIDTH-1:0] partial_sum_inputs [0:SYSTOLIC_SIZE-1]; 
     wire [PARTIAL_SUM_WIDTH-1:0] partial_sum_outputs [0:SYSTOLIC_SIZE-1];
+
     genvar i;
     generate
-        for (i = 0; i < SYSTOLIC_SIZE; i = i + 1) begin : partial_sum io conversion
+        for (i = 0; i < SYSTOLIC_SIZE; i = i + 1) begin : partial_sum_i_conversion
             assign partial_sum_inputs[i] = partial_sum_inputs_flat[i*PARTIAL_SUM_WIDTH +: PARTIAL_SUM_WIDTH];
             assign partial_sum_outputs_flat[i*PARTIAL_SUM_WIDTH +: PARTIAL_SUM_WIDTH] = partial_sum_outputs[i];
         end
@@ -37,10 +38,11 @@ module Accumulator #(
 
     //wr_addr 的registers
     integer k;
+
     always @(posedge clk , negedge rst_n) begin
         if (!rst_n) begin
             for (k = 0; k < SYSTOLIC_SIZE-1; k = k + 1) begin
-                wr_addr_en_reg[k] <= {ADDR_WIDTH{1'b0}, 1'b0};
+                wr_addr_en_reg[k] <= { {ADDR_WIDTH{1'b0}}, 1'b0};
             end
         end
         else begin
@@ -73,7 +75,7 @@ module Accumulator #(
         .partial_sum_inputs(partial_sum_inputs[0]),
         .rd_addr(rd_addr),
         .partial_sum_outputs(partial_sum_outputs[0])
-    )
+    );
 
     generate
         for (i = 1; i < SYSTOLIC_SIZE; i = i + 1) begin : accumulator_mem_gen

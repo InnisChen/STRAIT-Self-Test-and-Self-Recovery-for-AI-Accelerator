@@ -4,14 +4,14 @@ module Comparator #(
     parameter SYSTOLIC_SIZE = 8,
     parameter WEIGHT_WIDTH = 8,
     parameter ACTIVATION_WIDTH = 8,
-    parameter PARTIAL_SUM_WIDTH = WEIGHT_WIDTH + ACTIVATION_WIDTH + $clog2(SYSTOLIC_SIZE),
+    parameter PARTIAL_SUM_WIDTH = WEIGHT_WIDTH + ACTIVATION_WIDTH + $clog2(SYSTOLIC_SIZE)
 ) (
     input [PARTIAL_SUM_WIDTH-1:0] correct_answer,
     input [PARTIAL_SUM_WIDTH*SYSTOLIC_SIZE-1:0] partial_sum_flat,
-    output [SYSTOLIC_SIZE-1:0] comparaed_results
+    output [SYSTOLIC_SIZE-1:0] compared_results
 );
     // reg [PARTIAL_SUM_WIDTH-1:0] compare_xor [0:SYSTOLIC_SIZE-1];
-    reg [PARTIAL_SUM_WIDTH-1:0] partial_sum [0:SYSTOLIC_SIZE-1];
+    wire [PARTIAL_SUM_WIDTH-1:0] partial_sum [0:SYSTOLIC_SIZE-1];
 
     genvar i;
 
@@ -24,7 +24,7 @@ module Comparator #(
 
     generate
         for (i = 0; i < SYSTOLIC_SIZE; i = i + 1) begin : comparaed_results_gen
-            assign comparaed_results[i] = |(correct_answer ^ partial_sum[i]);
+            assign compared_results[i] = |(correct_answer ^ partial_sum[i]);
         end
     endgenerate
     
@@ -44,7 +44,7 @@ module Comparator #(
     input rst_n,
     input [PARTIAL_SUM_WIDTH-1:0] correct_answer,
     input [PARTIAL_SUM_WIDTH*SYSTOLIC_SIZE-1:0] partial_sum_flat,
-    output [SYSTOLIC_SIZE-1:0] comparaed_results
+    output [SYSTOLIC_SIZE-1:0] compared_results
 );
     reg [PARTIAL_SUM_WIDTH-1:0] compare_xor [0:SYSTOLIC_SIZE-1];
     reg [PARTIAL_SUM_WIDTH-1:0] partial_sum [0:SYSTOLIC_SIZE-1];
@@ -75,7 +75,7 @@ module Comparator #(
 
     generate
         for (i = 0; i < SYSTOLIC_SIZE; i = i + 1) begin : comparaed_results_gen
-            assign comparaed_results[i] = |compare_xor[i];  // 每個 partial sum 的比較結果
+            assign compared_results[i] = |compare_xor[i];  // 每個 partial sum 的比較結果
         end
     endgenerate
     

@@ -8,19 +8,19 @@ module Activation_mem #(
     input clk,
     input wr_en,
     input [ADDR_WIDTH-1:0] wr_addr,  // 寫入地址
-    input [SYSTOLIC_SIZE*ACTIVATION_WIDTH-1:0] activation_inputs,  // 輸入激活值
+    input [SYSTOLIC_SIZE*ACTIVATION_WIDTH-1:0] activation_inputs_flat,  // 輸入激活值
     input [ADDR_WIDTH-1:0] rd_addr,  // 讀取地址
-    output reg [SYSTOLIC_SIZE*ACTIVATION_WIDTH-1:0] activation_outputs   // 輸出激活值
+    output reg [SYSTOLIC_SIZE*ACTIVATION_WIDTH-1:0] activation_outputs_flat   // 輸出激活值
 );
 
     reg [SYSTOLIC_SIZE*ACTIVATION_WIDTH-1:0] activation_memory [0:SYSTOLIC_SIZE-1];
     
     always @(posedge clk ) begin
         if(wr_en) begin
-            activation_memory[wr_addr] <= activation_inputs;
+            activation_memory[wr_addr] <= activation_inputs_flat;
         end
     end
 
-    assign activation_outputs = activation_memory[rd_addr];
+    assign activation_outputs_flat = activation_memory[rd_addr];
     
 endmodule

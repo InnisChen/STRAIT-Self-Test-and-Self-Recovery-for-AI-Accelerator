@@ -20,7 +20,7 @@ module bisr_weight_allocation #(
     input wire [ADDR_WIDTH-1:0] read_addr,
     
     // 輸出給 Systolic Array
-    output wire [SYSTOLIC_SIZE*WEIGHT_WIDTH-1:0] output_weights,
+    output wire [SYSTOLIC_SIZE*WEIGHT_WIDTH-1:0] output_weights_flat,
     
     // 輸出給 Activation Buffer
     output wire [ADDR_WIDTH-1:0] output_mapped_addr,
@@ -160,7 +160,7 @@ module bisr_weight_allocation #(
         
         // Read interface (to Systolic Array)
         .rd_addr(mapped_read_addr),  // 使用映射後的地址
-        .rd_data(output_weights)
+        .rd_data(output_weights_flat)
     );
     
     // Output mapped address to Activation Buffer

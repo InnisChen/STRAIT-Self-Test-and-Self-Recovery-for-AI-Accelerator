@@ -1,0 +1,24 @@
+# compile verilog/system verilog design source files
+verilog xil_defaultlib  \
+"../../../../../../Accumulator.v" \
+"../../../../../../Accumulator_mem.v" \
+"../../../../../../Activation_mem.v" \
+"../../../../../../Buffer.v" \
+"../../../../../../Comparator.v" \
+"../../../../../../Diagnostic_loop_chains.v" \
+"../../../../../../Memory_data_generator.v" \
+"../../../../../../PE_STRAIT.v" \
+"../../../../../../Systolic_array.v" \
+"../../../../../../bisr_weight_allocation.v" \
+"../../../../../../eNVM.v" \
+"../../../../../../faulty_pe_storage.v" \
+"../../../../../../hybrid_bist.v" \
+"../../../../../../mapping_table.v" \
+"../../../../../../row_weight_storage.v" \
+"../../../../../../STRAIT.v" \
+
+# compile glbl module
+verilog xil_defaultlib "glbl.v"
+
+# Do not sort compile order
+nosort

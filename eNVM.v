@@ -17,7 +17,7 @@ module eNVM #(
     input clk,
     // input rst_n,
     input test_type, // 0: SA , 1: TD
-    input [MAX_ADDR_WIDTH-1:0] test_counter; // 需要第幾個test_pattern
+    input [MAX_ADDR_WIDTH-1:0] test_counter, // 需要第幾個test_pattern
     input detection_en,
     input [ADDR_WIDTH-1:0] counter,
     input [SYSTOLIC_SIZE-1:0] single_pe_detection,
