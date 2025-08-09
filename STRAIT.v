@@ -46,13 +46,13 @@ module STRAIT #(
         .test_type(test_type), // 0: SA , 1: TD
         .test_counter(test_counter), // 需要第幾個test_pattern
         .detection_en(detection_en),
-        .counter(counter_dlc_envm),
-        .single_pe_detection(single_pe_detection),
-        .row_fault_detection(row_fault_detection),      //每次1bit 傳n次
-        .column_fault_detection(column_fault_detection_dlc_envm),
-
+        .counter(counter_dlc_envm), 
+        .single_pe_detection(single_pe_detection_dlc_envm),
+        .column_fault_detection(column_fault_detection_dlc_envm),   
+        .row_fault_detection(row_fault_detection_dlc_envm),      //每次1bit 傳n次
+        
         // output
-        .envm_faulty_patterns_flat(envm_faulty_patterns_flat),
+        .envm_faulty_patterns_flat(envm_faulty_patterns_flat_envm_bisr),    // from envm to bisr
         .Scan_data_weight(Scan_data_weight),
         .Scan_data_activation(Scan_data_activation),
         .Scan_data_answer(Scan_data_answer)
@@ -70,7 +70,7 @@ module STRAIT #(
         .clk(clk),
         .rst_n(rst_n),
         .envm_wr_en(envm_wr_en),
-        .envm_faulty_patterns_flat(envm_faulty_patterns_flat),
+        .envm_faulty_patterns_flat(envm_faulty_patterns_flat_envm_bisr),    // from envm to bisr
         .weight_start(weight_start),                                    // 開始權重配置的信號
         .input_weights(input_weight_flat),
         .weight_valid(weight_valid),
@@ -201,9 +201,9 @@ module STRAIT #(
         .col_inputs(col_inputs),
 
         // output
+        .single_pe_detection(single_pe_detection_dlc_envm),
         .column_fault_detection(column_fault_detection_dlc_envm),
-        .row_fault_detection(row_fault_detection),
-        .single_pe_detection(single_pe_detection),
+        .row_fault_detection(row_fault_detection_dlc_envm),
         .counter(counter_dlc_envm)   //輸出給envm讀取第幾個row的錯誤資訊，因envm 沒有rst沒辦法rst counter 訊號
     );
     

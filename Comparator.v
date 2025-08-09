@@ -23,7 +23,7 @@ module Comparator #(
     endgenerate
 
     generate
-        for (i = 0; i < SYSTOLIC_SIZE; i = i + 1) begin : comparaed_results_gen
+        for (i = 0; i < SYSTOLIC_SIZE; i = i + 1) begin : compared_results_gen
             assign compared_results[i] = |(correct_answer ^ partial_sum[i]);
         end
     endgenerate

@@ -21,9 +21,9 @@ module eNVM #(
     input detection_en,
     input [ADDR_WIDTH-1:0] counter,
     input [SYSTOLIC_SIZE-1:0] single_pe_detection,
-    input row_fault_detection,      //每次1bit 傳n次
-    input column_fault_detection,   //....
-
+    input column_fault_detection,   //每次1bit 傳n次
+    input row_fault_detection,      //...
+    
     output [SYSTOLIC_SIZE*SYSTOLIC_SIZE-1:0] envm_faulty_patterns_flat,
     output [WEIGHT_WIDTH-1:0] Scan_data_weight,
     output [ACTIVATION_WIDTH-1:0] Scan_data_activation,

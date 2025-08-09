@@ -1,6 +1,6 @@
 // Accumulator_mem.v
-//test_mode 讀取時，rd_addr 都一樣(平行讀出)
-//正常運作讀取時，rd_addr 45度的讀
+// test_mode 讀取時，rd_addr 都一樣(平行讀出)
+// 正常運作讀取時，rd_addr 45度的讀
 
 module Accumulator_mem #(
     parameter SYSTOLIC_SIZE = 8,

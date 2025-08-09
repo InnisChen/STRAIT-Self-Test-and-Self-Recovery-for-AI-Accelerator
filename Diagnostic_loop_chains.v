@@ -8,9 +8,10 @@ module Diagnostic_loop_chains #(
     input rst_n,
     input start_en,
     input [SYSTOLIC_SIZE-1:0] col_inputs,  // 使用向量輸入，大小可變
+    output [SYSTOLIC_SIZE-1:0] single_pe_detection, //單row pe輸出
     output [SYSTOLIC_SIZE-1:0] column_fault_detection,  // 每個column的fault檢測輸出
     output [SYSTOLIC_SIZE-1:0] row_fault_detection,  // 每個row的fault檢測輸出
-    output [SYSTOLIC_SIZE-1:0] single_pe_detection, //單row pe輸出
+    
 
     output reg [ADDR_WIDTH-1:0] counter //輸出給envm讀取第幾個row的錯誤資訊，因envm 沒有rst沒辦法rst counter 訊號
 );
