@@ -4,7 +4,7 @@ module row_weight_storage #(
     parameter ADDR_WIDTH = $clog2(SYSTOLIC_SIZE)
 )(
     input wire clk,
-    input wire rst_n,
+    input wire rst_n,   // 考慮是否刪除
     
     // Write interface (初始化權重資料)
     input wire wr_en,

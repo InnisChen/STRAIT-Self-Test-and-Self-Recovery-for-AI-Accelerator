@@ -35,7 +35,7 @@ module STRAIT_PE #(
     assign partial_sum = (scan_en||PE_disable) ? partial_sum_in : MAC_result;   //mux result
 
     //if do not use the clk_w , I need a signal to control the weight register to stay in the current value , the signal should be connect to the all PE.
-    always @(posedge clk_w , negedge rst_n) begin
+    always @(posedge clk_w or negedge rst_n) begin
     // always @(posedge clk , negedge rst_n) begin
         if(rst_n == 1'b0) begin
             weight_out <= {WEIGHT_WIDTH{1'b0}};
@@ -47,7 +47,7 @@ module STRAIT_PE #(
         end
     end
 
-    always @(posedge clk , negedge rst_n) begin
+    always @(posedge clk or negedge rst_n) begin
         if(rst_n == 1'b0) begin
             activation_out <= {ACTIVATION_WIDTH{1'b0}};
             partial_sum_out <= {PARTIAL_SUM_WIDTH{1'b0}};

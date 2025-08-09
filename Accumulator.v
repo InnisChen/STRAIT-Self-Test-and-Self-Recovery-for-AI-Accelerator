@@ -39,7 +39,7 @@ module Accumulator #(
     //wr_addr 的registers
     integer k;
 
-    always @(posedge clk , negedge rst_n) begin
+    always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             for (k = 0; k < SYSTOLIC_SIZE-1; k = k + 1) begin
                 wr_addr_en_reg[k] <= { {ADDR_WIDTH{1'b0}}, 1'b0};

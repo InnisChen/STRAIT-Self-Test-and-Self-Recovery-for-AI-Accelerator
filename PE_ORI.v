@@ -24,7 +24,7 @@ module ORI_PE #(
         .result(MAC_result)
     );
 
-    always @(posedge clk_w , negedge rst_n) begin
+    always @(posedge clk_w or negedge rst_n) begin
     // always @(posedge clk , negedge rst_n) begin
         if(rst_n == 1'b0) 
             weight_out <= {WEIGHT_WIDTH{1'b0}};
@@ -32,7 +32,7 @@ module ORI_PE #(
         weight_out <= weight;
     end
 
-    always @(posedge clk , negedge rst_n) begin
+    always @(posedge clk or negedge rst_n) begin
         if(rst_n == 1'b0) begin
             activation_out <= {ACTIVATION_WIDTH{1'b0}};
             partial_sum_out <= {PARTIAL_SUM_WIDTH{1'b0}};

@@ -105,7 +105,7 @@ module Diagnostic_loop_chains #(
         else;
     end
 
-    always @(posedge clk , negedge rst_n) begin
+    always @(posedge clk or negedge rst_n) begin
         if(!rst_n) begin
             counter <= {ADDR_WIDTH{1'b0}};
         end
