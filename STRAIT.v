@@ -154,9 +154,11 @@ module STRAIT #(
         .clk(clk),
         .rst_n(rst_n),
         .test_mode(test_mode),
+        .BIST_mode(BIST_mode),    // 0: MBIST, 1: LBIST
         .wr_en(wr_en_bist_accumulator),
         .wr_addr(wr_addr_bist_accumulator),  // 正常使用時，可能要需要從bist的address generator 給
-        .partial_sum_inputs_flat(partial_sum_flat_array_accumulator),   // from systolic array to accumulator
+        .partial_sum_inputs_array_flat(partial_sum_flat_array_accumulator),   // from systolic array to accumulator
+        .partial_sum_inputs_test_flat(partial_sum_flat_bist_accumulator), // MBIST 測試模式下的輸入部分和，從BIST送入
         .rd_addr_bist(rd_addr_bist_accumulator),  // 測試時用bist給讀取地址
         .rd_addr_outside(rd_addr),  // 正常使用從外面送讀取地址
 
@@ -210,16 +212,16 @@ module STRAIT #(
         .MBIST_PATTERN_DEPTH(MBIST_PATTERN_DEPTH),
         .MAX_PATTERN_ADDR_WIDTH(MAX_PATTERN_ADDR_WIDTH)
     ) hybrid_bist_inst (
-        // input 
-        .clk(clk),
-        .rst_n(rst_n),
-        .START(START),
-        .test_mode(test_mode),    // 是否在測試模式
-        .BIST_mode(BIST_mode),    // 0: MBIST, 1: LBIST
+        // // input 
+        // .clk(clk),
+        // .rst_n(rst_n),
+        // .START(START),
+        // .test_mode(test_mode),    // 是否在測試模式
+        // .BIST_mode(BIST_mode),    // 0: MBIST, 1: LBIST
         
 
-        // output 
-        .test_type(test_type),    // 0: SA, 1: TD
+        // // output 
+        // .test_type(test_type),    // 0: SA, 1: TD
 
     );
 
