@@ -17,8 +17,9 @@ module eNVM #(
     input clk,
     // input rst_n,
     input test_type, // 0: SA , 1: TD
+    input TD_answer_choose , // TD測試下，選擇要launch還是capture answer( 0: launch answer , 1: capture answer )
     input [MAX_ADDR_WIDTH-1:0] test_counter, // 需要第幾個test_pattern
-    input detection_en,     // 是否啟用診斷模式
+    input detection_en,     // 診斷結果送到envm儲存訊號
     input [ADDR_WIDTH-1:0] detection_addr,
     input [SYSTOLIC_SIZE-1:0] single_pe_detection,
     input column_fault_detection,   //每次1bit 傳n次
@@ -36,12 +37,13 @@ module eNVM #(
 
     reg [WEIGHT_WIDTH-1:0] TD_Scan_data_weight_reg [0:TD_TEST_PATTERN_DEPTH-1];
     reg [ACTIVATION_WIDTH-1:0] TD_Scan_data_activation_reg [0:TD_TEST_PATTERN_DEPTH-1];
-    reg [PARTIAL_SUM_WIDTH-1:0] TD_Scan_data_answer_reg [0:TD_TEST_PATTERN_DEPTH-1];
+    reg [PARTIAL_SUM_WIDTH-1:0] TD_Scan_data_launch_answer_reg [0:TD_TEST_PATTERN_DEPTH-1];
+    reg [PARTIAL_SUM_WIDTH-1:0] TD_Scan_data_capture_answer_reg [0:TD_TEST_PATTERN_DEPTH-1];
+
 
     assign Scan_data_weight = test_type ? TD_Scan_data_weight_reg[test_counter] : SA_Scan_data_weight_reg[test_counter];
     assign Scan_data_activation = test_type ? TD_Scan_data_activation_reg[test_counter] : SA_Scan_data_activation_reg[test_counter];
-    assign Scan_data_answer = test_type ? TD_Scan_data_answer_reg[test_counter] : SA_Scan_data_answer_reg[test_counter];
-
+    assign Scan_data_answer = test_type ? (TD_answer_choose ? TD_Scan_data_capture_answer_reg[test_counter] : TD_Scan_data_launch_answer_reg[test_counter]) : SA_Scan_data_answer_reg[test_counter];
 
 
     // Faulty PE Storage

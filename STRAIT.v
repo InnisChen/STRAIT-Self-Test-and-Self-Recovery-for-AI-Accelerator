@@ -32,6 +32,7 @@ module STRAIT #(
     
     // output
     output [SYSTOLIC_SIZE*PARTIAL_SUM_WIDTH-1:0] partial_sum_outputs_flat_outside,
+    output test_done,  // 測試完成信號，MBIST , SA , TD 測試完都會拉高1cycle
     output MBIST_test_result,
     output LBIST_test_result,
 
@@ -53,6 +54,7 @@ module STRAIT #(
         // input 
         .clk(clk),
         .test_type(test_type), // 0: SA , 1: TD    from hybrid_bist
+        .TD_answer_choose(TD_answer_choose_bist_envm), // TD測試下，選擇要launch還是capture answer( 0: launch answer , 1: capture answer )
         .test_counter(test_counter_bist_envm),      // 需要第幾個test_pattern
         .detection_en(detection_en_bist_envm),      // bist告知envm可以開始讀DLC的資料
         .detection_addr(detection_addr_bist_envm),      // 需要讀取第幾個row的錯誤資訊
@@ -200,7 +202,6 @@ module STRAIT #(
         .activation_out_flat(activation_data_flat_buffer_array)  // from buffer to systolic array
     );
 
-    // hybrid_bist (comparator)
     hybrid_bist #(
         .SYSTOLIC_SIZE(SYSTOLIC_SIZE),
         .WEIGHT_WIDTH(WEIGHT_WIDTH),
@@ -212,17 +213,67 @@ module STRAIT #(
         .MBIST_PATTERN_DEPTH(MBIST_PATTERN_DEPTH),
         .MAX_PATTERN_ADDR_WIDTH(MAX_PATTERN_ADDR_WIDTH)
     ) hybrid_bist_inst (
-        // // input 
-        // .clk(clk),
-        // .rst_n(rst_n),
-        // .START(START),
-        // .test_mode(test_mode),    // 是否在測試模式
-        // .BIST_mode(BIST_mode),    // 0: MBIST, 1: LBIST
+        // 基本控制信號 - inputs
+        .clk(clk),
+        .rst_n(rst_n),
+        .START(START),
+        .test_mode(test_mode),
+        .BIST_mode(BIST_mode),
+        .activation_valid(activation_valid),
         
-
-        // // output 
-        // .test_type(test_type),    // 0: SA, 1: TD
-
+        // 與 eNVM 的介面 - inputs
+        .envm_weight(Scan_data_weight_envm_bist),
+        .envm_activation(Scan_data_activation_envm_bist),
+        .envm_answer(Scan_data_answer_envm_bist),
+        
+        // 診斷電路回饋信號 - inputs
+        .single_pe_detection(single_pe_detection_dlc_envm),
+        .row_fault_detection(row_fault_detection_dlc_envm),
+        .column_fault_detection(column_fault_detection_dlc_envm),
+        
+        // Accumulator 回饋信號 - inputs
+        .partial_sum_flat(partial_sum_outputs_flat),
+        
+        // 與 eNVM 的介面 - outputs
+        .test_type(test_type),
+        .test_counter(test_counter_bist_envm),
+        .detection_en(detection_en_bist_envm),
+        .detection_addr(detection_addr_bist_envm),
+        // .TD_answer_choose(TD_answer_choose_bist_envm),
+        
+        // 控制 Systolic Array 的信號 - outputs
+        .scan_en(scan_en_bist_array),
+        
+        // 給 BISR 的控制信號 - outputs
+        .envm_wr_en(envm_wr_en_bist_bisr),
+        .allocation_start(allocation_start_bist_bisr),
+        .read_addr(read_addr_bist_bisr),
+        
+        // 給 Weight_partialsum_buffer 的控制信號 - outputs
+        .weight_in_test_flat(weight_in_test_flat_bist_buffer),
+        .partial_sum_test_flat(partial_sum_test_flat_bist_buffer),
+        
+        // 給 Activation_buffer 的激活控制信號 - outputs
+        .activation_in_test_flat(activation_in_test_flat_bist_buffer),
+        
+        // 診斷電路控制信號 - outputs
+        .diagnosis_start_en(start_en_bist_dlc),
+        
+        // Accumulator 控制信號 (MBIST + LBIST 共用) - outputs
+        .acc_wr_en(wr_en_bist_accumulator),
+        .acc_wr_addr(wr_addr_bist_accumulator),
+        .acc_wr_data(partial_sum_flat_bist_accumulator),  // 連接到已存在的測試資料信號
+        .acc_rd_addr(rd_addr_bist_accumulator),
+        
+        // Activation_mem 控制信號 - outputs
+        .activation_mem_wr_en(wr_en_bist_activationmem),
+        .activation_mem_wr_addr(wr_addr_bist_activationmem),
+        
+        // 測試結果 - outputs
+        .test_done(test_done),  // 測試完成信號，通知 test_bench
+        .MBIST_test_result(MBIST_test_result),
+        .LBIST_test_result(LBIST_test_result),
+        .compared_results(compared_results_bist_dlc)  // 連接到 DLC
     );
 
 
@@ -235,7 +286,7 @@ module STRAIT #(
         .clk(clk),
         .rst_n(rst_n),
         .start_en(start_en_bist_dlc),    // 送到accumulator後啟動
-        .col_inputs(col_inputs_bist_dlc),   // from bist 的comparator
+        .col_inputs(compared_results_bist_dlc),   // from bist 的comparator
 
         // output
         .single_pe_detection(single_pe_detection_dlc_envm),
