@@ -1,6 +1,0 @@
-INFO: [VRFC 10-2263] Analyzing Verilog file "C:/Project/STRAIT/Accumulator.v" into library xil_defaultlib
-INFO: [VRFC 10-311] analyzing module Accumulator
-ERROR: [VRFC 10-4982] syntax error near 'generate' [C:/Project/STRAIT/Accumulator.v:86]
-ERROR: [VRFC 10-8549] Verilog 2000 keyword 'generate' used in incorrect context [C:/Project/STRAIT/Accumulator.v:86]
-ERROR: [VRFC 10-2969] 'i' is not a type [C:/Project/STRAIT/Accumulator.v:87]
-ERROR: [VRFC 10-8530] module 'Accumulator' is ignored due to previous errors [C:/Project/STRAIT/Accumulator.v:4]
