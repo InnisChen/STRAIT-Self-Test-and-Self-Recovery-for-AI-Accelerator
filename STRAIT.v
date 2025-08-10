@@ -38,7 +38,7 @@ module STRAIT #(
 
     output recovery_success,    // 從bisr送出
     output recovery_done        // 從bisr送出
-)
+);
     
 
     // eNVM 
@@ -236,10 +236,10 @@ module STRAIT #(
         
         // 與 eNVM 的介面 - outputs
         .test_type(test_type),
+        .TD_answer_choose(TD_answer_choose_bist_envm),
         .test_counter(test_counter_bist_envm),
         .detection_en(detection_en_bist_envm),
         .detection_addr(detection_addr_bist_envm),
-        // .TD_answer_choose(TD_answer_choose_bist_envm),
         
         // 控制 Systolic Array 的信號 - outputs
         .scan_en(scan_en_bist_array),

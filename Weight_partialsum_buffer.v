@@ -4,8 +4,7 @@ module Weight_partialsum_buffer #(
     parameter SYSTOLIC_SIZE = 8,
     parameter WEIGHT_WIDTH = 8,
     parameter ACTIVATION_WIDTH = 8,
-    parameter PARTIAL_SUM_WIDTH = WEIGHT_WIDTH + ACTIVATION_WIDTH + $clog2(SYSTOLIC_SIZE),
-
+    parameter PARTIAL_SUM_WIDTH = WEIGHT_WIDTH + ACTIVATION_WIDTH + $clog2(SYSTOLIC_SIZE)
 ) (
     input test_mode,    // 0: 正常模式45度, 1: 測試模式平行送入
     input [SYSTOLIC_SIZE*WEIGHT_WIDTH-1:0] weight_in_test_flat, // 考慮輸入是否縮減成 [WEIGHT_WIDTH-1:0] ，在bist內部複製訊號成flat就好。 因測試權重都是相同的

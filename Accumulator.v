@@ -12,7 +12,7 @@ module Accumulator #(
     input clk,
     input rst_n,
     input test_mode,
-    input BIST_mode, // 0: MBIST, 1: LBIST
+    input BIST_mode, // 0: MBIST, 1: LBIST      memory BIST測試下資料從BIST送
     input wr_en,
     input [ADDR_WIDTH-1:0] wr_addr,  // 寫入地址
     input [PARTIAL_SUM_WIDTH*SYSTOLIC_SIZE-1:0] partial_sum_inputs_array_flat,  // 輸入部分和，從systolic array來的
