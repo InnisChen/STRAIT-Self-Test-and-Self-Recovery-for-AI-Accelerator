@@ -1,0 +1,13 @@
+# compile verilog/system verilog design source files
+sv xil_defaultlib  \
+"../../../../../bisr_weight_allocation.v" \
+"../../../../../faulty_pe_storage.v" \
+"../../../../../mapping_table.v" \
+"../../../../../row_weight_storage.v" \
+"../../../../../tb_bisr_weight_allocation.v" \
+
+# compile glbl module
+verilog xil_defaultlib "glbl.v"
+
+# Do not sort compile order
+nosort

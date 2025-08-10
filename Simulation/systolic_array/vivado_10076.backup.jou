@@ -1,0 +1,38 @@
+#-----------------------------------------------------------
+# Vivado v2023.2 (64-bit)
+# SW Build 4029153 on Fri Oct 13 20:14:34 MDT 2023
+# IP Build 4028589 on Sat Oct 14 00:45:43 MDT 2023
+# SharedData Build 4025554 on Tue Oct 10 17:18:54 MDT 2023
+# Start of session at: Tue Jul 29 18:34:06 2025
+# Process ID: 10076
+# Current directory: C:/Project/STRAIT/systolic_array
+# Command line: vivado.exe -gui_launcher_event rodinguilauncherevent22956 C:\Project\STRAIT\systolic_array\systolic_array.xpr
+# Log file: C:/Project/STRAIT/systolic_array/vivado.log
+# Journal file: C:/Project/STRAIT/systolic_array\vivado.jou
+# Running On: Innis, OS: Windows, CPU Frequency: 2419 MHz, CPU Physical cores: 4, Host memory: 16873 MB
+#-----------------------------------------------------------
+start_gui
+open_project C:/Project/STRAIT/systolic_array/systolic_array.xpr
+update_compile_order -fileset sources_1
+launch_simulation
+launch_simulation
+launch_simulation
+launch_simulation
+launch_simulation
+launch_simulation
+delete_fileset [ get_filesets sim_1 ]
+export_ip_user_files -of_objects  [get_files C:/Project/STRAIT/Systolic_array.v] -no_script -reset -force -quiet
+remove_files  C:/Project/STRAIT/Systolic_array.v
+export_ip_user_files -of_objects  [get_files C:/Project/STRAIT/PE_STRAIT.v] -no_script -reset -force -quiet
+remove_files  C:/Project/STRAIT/PE_STRAIT.v
+export_ip_user_files -of_objects  [get_files C:/Project/STRAIT/tb_Systolic_array.v] -no_script -reset -force -quiet
+remove_files  -fileset sim_1 C:/Project/STRAIT/tb_Systolic_array.v
+add_files -norecurse {C:/Project/STRAIT/tb_Systolic_array.v C:/Project/STRAIT/Systolic_array.v C:/Project/STRAIT/PE_STRAIT.v}
+update_compile_order -fileset sources_1
+set_property file_type SystemVerilog [get_files  C:/Project/STRAIT/tb_Systolic_array.v]
+update_compile_order -fileset sources_1
+launch_simulation -mode post-synthesis -type functional
+launch_simulation
+export_ip_user_files -of_objects  [get_files C:/Project/STRAIT/systolic_array/Array_8x8_tb_behav.wcfg] -no_script -reset -force -quiet
+remove_files  -fileset sim_1 C:/Project/STRAIT/systolic_array/Array_8x8_tb_behav.wcfg
+launch_simulation

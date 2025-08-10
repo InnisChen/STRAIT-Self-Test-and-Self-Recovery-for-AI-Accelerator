@@ -1,0 +1,30 @@
+ 
+****************************************
+Report : area
+Design : Activation_mem_1
+Version: O-2018.06
+Date   : Tue Jul 29 03:04:32 2025
+****************************************
+
+Library(s) Used:
+
+    slow (File: /home/wuyifan/Desktop/0728/Lib/slow.db)
+
+Number of ports:                          136
+Number of nets:                          1182
+Number of cells:                         1110
+Number of combinational cells:            598
+Number of sequential cells:               512
+Number of macros/black boxes:               0
+Number of buf/inv:                        257
+Number of references:                      29
+
+Combinational area:               2493.590450
+Buf/Inv area:                      692.193621
+Noncombinational area:            9754.214844
+Macro/Black Box area:                0.000000
+Net Interconnect area:          148820.786682
+
+Total cell area:                 12247.805294
+Total area:                     161068.591976
+1

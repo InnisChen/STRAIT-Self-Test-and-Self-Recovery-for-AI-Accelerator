@@ -1,0 +1,7 @@
+INFO: [VRFC 10-2263] Analyzing Verilog file "C:/Project/STRAIT/Array_8x8.v" into library xil_defaultlib
+INFO: [VRFC 10-311] analyzing module PE_Array_8x8
+INFO: [VRFC 10-2263] Analyzing Verilog file "C:/Project/STRAIT/PE_STRAIT.v" into library xil_defaultlib
+INFO: [VRFC 10-311] analyzing module STRAIT_PE
+INFO: [VRFC 10-311] analyzing module MAC
+INFO: [VRFC 10-2263] Analyzing Verilog file "C:/Project/STRAIT/Array_8x8_tb.v" into library xil_defaultlib
+INFO: [VRFC 10-311] analyzing module Array_8x8_tb

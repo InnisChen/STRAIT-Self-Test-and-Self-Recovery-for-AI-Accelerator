@@ -1,0 +1,73 @@
+ 
+****************************************
+Report : timing
+        -path full
+        -delay max
+        -max_paths 1
+Design : STRAIT_PE_1
+Version: O-2018.06
+Date   : Mon Jul 28 02:51:19 2025
+****************************************
+
+Operating Conditions: slow   Library: slow
+Wire Load Model Mode: top
+
+  Startpoint: weight[7] (input port clocked by clk)
+  Endpoint: partial_sum_out_reg[17]
+            (rising edge-triggered flip-flop clocked by clk)
+  Path Group: clk
+  Path Type: max
+
+  Des/Clust/Port     Wire Load Model       Library
+  ------------------------------------------------
+  STRAIT_PE_1        tsmc090_wl10          slow
+
+  Point                                                   Incr       Path
+  --------------------------------------------------------------------------
+  clock clk (rise edge)                                   0.00       0.00
+  clock network delay (ideal)                             0.10       0.10
+  input external delay                                    0.50       0.60 r
+  weight[7] (in)                                          0.01       0.61 r
+  MAC_u1/weight[7] (MAC)                                  0.00       0.61 r
+  MAC_u1/mult_55/a[7] (MAC_DW_mult_uns_1)                 0.00       0.61 r
+  MAC_u1/mult_55/U314/Y (INVX12)                          0.06       0.66 f
+  MAC_u1/mult_55/U447/Y (NOR2X2)                          0.24       0.90 r
+  MAC_u1/mult_55/U292/S (ADDFHX4)                         0.23       1.13 f
+  MAC_u1/mult_55/U431/S (ADDFX1)                          0.37       1.50 f
+  MAC_u1/mult_55/U386/S (ADDFHX4)                         0.24       1.73 r
+  MAC_u1/mult_55/U309/Y (NAND2X4)                         0.12       1.86 f
+  MAC_u1/mult_55/U448/Y (OAI21X3)                         0.15       2.01 r
+  MAC_u1/mult_55/U417/Y (AO21X4)                          0.10       2.11 r
+  MAC_u1/mult_55/U412/Y (OAI21BX4)                        0.09       2.20 r
+  MAC_u1/mult_55/U259/Y (BUFX14)                          0.10       2.30 r
+  MAC_u1/mult_55/U396/Y (AO21X4)                          0.11       2.42 r
+  MAC_u1/mult_55/U420/Y (XOR2X8)                          0.09       2.51 f
+  MAC_u1/mult_55/product[13] (MAC_DW_mult_uns_1)          0.00       2.51 f
+  MAC_u1/add_56/A[13] (MAC_DW01_add_2)                    0.00       2.51 f
+  MAC_u1/add_56/U241/Y (NOR2X8)                           0.15       2.66 r
+  MAC_u1/add_56/U272/Y (OAI21X8)                          0.11       2.77 f
+  MAC_u1/add_56/U218/Y (AOI21X4)                          0.15       2.92 r
+  MAC_u1/add_56/U224/Y (OAI21X8)                          0.08       2.99 f
+  MAC_u1/add_56/U271/Y (BUFX20)                           0.09       3.09 f
+  MAC_u1/add_56/U204/Y (NAND2X2)                          0.08       3.16 r
+  MAC_u1/add_56/U189/Y (XOR2X3)                           0.12       3.28 r
+  MAC_u1/add_56/SUM[17] (MAC_DW01_add_2)                  0.00       3.28 r
+  MAC_u1/result[17] (MAC)                                 0.00       3.28 r
+  U140/Y (MX2X1)                                          0.17       3.45 r
+  partial_sum_out_reg[17]/D (DFFRQXL)                     0.00       3.45 r
+  data arrival time                                                  3.45
+
+  clock clk (rise edge)                                   4.00       4.00
+  clock network delay (ideal)                             0.10       4.10
+  clock uncertainty                                      -0.50       3.60
+  partial_sum_out_reg[17]/CK (DFFRQXL)                    0.00       3.60 r
+  library setup time                                     -0.15       3.45
+  data required time                                                 3.45
+  --------------------------------------------------------------------------
+  data required time                                                 3.45
+  data arrival time                                                 -3.45
+  --------------------------------------------------------------------------
+  slack (MET)                                                        0.00
+
+
+1

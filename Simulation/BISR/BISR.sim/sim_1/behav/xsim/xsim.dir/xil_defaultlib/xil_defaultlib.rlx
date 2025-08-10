@@ -1,0 +1,10 @@
+0.7
+2020.2
+Oct 13 2023
+20:47:58
+C:/Project/STRAIT/BISR/BISR.sim/sim_1/behav/xsim/glbl.v,1697210495,verilog,,,,glbl,,uvm,,,,,,
+C:/Project/STRAIT/bisr_weight_allocation.v,1754387392,systemVerilog,,C:/Project/STRAIT/faulty_pe_storage.v,,bisr_weight_allocation,,uvm,,,,,,
+C:/Project/STRAIT/faulty_pe_storage.v,1754463817,systemVerilog,,C:/Project/STRAIT/mapping_table.v,,faulty_pe_storage,,uvm,,,,,,
+C:/Project/STRAIT/mapping_table.v,1754390184,systemVerilog,,C:/Project/STRAIT/row_weight_storage.v,,mapping_table,,uvm,,,,,,
+C:/Project/STRAIT/row_weight_storage.v,1753715074,systemVerilog,,C:/Project/STRAIT/tb_bisr_weight_allocation.v,,row_weight_storage,,uvm,,,,,,
+C:/Project/STRAIT/tb_bisr_weight_allocation.v,1754464945,systemVerilog,,,,tb_bisr_weight_allocation,,uvm,,,,,,

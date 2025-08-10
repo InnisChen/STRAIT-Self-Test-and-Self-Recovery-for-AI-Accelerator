@@ -1,0 +1,10 @@
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "C:/Project/STRAIT/bisr_weight_allocation.v" into library xil_defaultlib
+INFO: [VRFC 10-311] analyzing module bisr_weight_allocation
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "C:/Project/STRAIT/faulty_pe_storage.v" into library xil_defaultlib
+INFO: [VRFC 10-311] analyzing module faulty_pe_storage
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "C:/Project/STRAIT/mapping_table.v" into library xil_defaultlib
+INFO: [VRFC 10-311] analyzing module mapping_table
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "C:/Project/STRAIT/row_weight_storage.v" into library xil_defaultlib
+INFO: [VRFC 10-311] analyzing module row_weight_storage
+INFO: [VRFC 10-2263] Analyzing SystemVerilog file "C:/Project/STRAIT/tb_bisr_weight_allocation.v" into library xil_defaultlib
+INFO: [VRFC 10-311] analyzing module tb_bisr_weight_allocation

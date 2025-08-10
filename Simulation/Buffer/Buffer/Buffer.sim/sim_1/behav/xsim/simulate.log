@@ -1,0 +1,240 @@
+Time resolution is 1 ps
+==========================================
+Starting Buffer Module Test
+SYSTOLIC_SIZE = 8
+ACTIVATION_WIDTH = 8
+==========================================
+Time: 0 | test_mode: 0 | rst_n: 0 | Input[0]: 00 | Output[0]: 00
+Time: 20000 | test_mode: 0 | rst_n: 1 | Input[0]: 00 | Output[0]: 00
+
+>>>>> Test 1: Test Mode (Parallel Output) <<<<<
+Time: 30000 | test_mode: 1 | rst_n: 1 | Input[0]: 10 | Output[0]: 10
+
+===           Test Mode - Data Set 1 ===
+Time: 40000
+Row[0]: Input=0x10, Output=0x10
+Row[1]: Input=0x11, Output=0x11
+Row[2]: Input=0x12, Output=0x12
+Row[3]: Input=0x13, Output=0x13
+Row[4]: Input=0x14, Output=0x14
+Row[5]: Input=0x15, Output=0x15
+Row[6]: Input=0x16, Output=0x16
+Row[7]: Input=0x17, Output=0x17
+
+=== Verifying Test Mode (Parallel Output) ===
+PASS: Test mode verification passed
+
+Time: 40000 | test_mode: 1 | rst_n: 1 | Input[0]: a0 | Output[0]: a0
+
+===           Test Mode - Data Set 2 ===
+Time: 50000
+Row[0]: Input=0xa0, Output=0xa0
+Row[1]: Input=0xa1, Output=0xa1
+Row[2]: Input=0xa2, Output=0xa2
+Row[3]: Input=0xa3, Output=0xa3
+Row[4]: Input=0xa4, Output=0xa4
+Row[5]: Input=0xa5, Output=0xa5
+Row[6]: Input=0xa6, Output=0xa6
+Row[7]: Input=0xa7, Output=0xa7
+
+=== Verifying Test Mode (Parallel Output) ===
+PASS: Test mode verification passed
+
+
+>>>>> Test 2: Normal Mode (45-degree Delay) <<<<<
+Time: 50000 | test_mode: 0 | rst_n: 0 | Input[0]: a0 | Output[0]: a0
+Time: 60000 | test_mode: 0 | rst_n: 1 | Input[0]: a0 | Output[0]: a0
+Time: 70000 | test_mode: 0 | rst_n: 1 | Input[0]: 20 | Output[0]: 20
+
+===            Normal Mode - Cycle 1 ===
+Time: 80000
+Row[0]: Input=0x20, Output=0x20
+Row[1]: Input=0x21, Output=0x21
+Row[2]: Input=0x22, Output=0xa2
+Row[3]: Input=0x23, Output=0x00
+Row[4]: Input=0x24, Output=0x00
+Row[5]: Input=0x25, Output=0x00
+Row[6]: Input=0x26, Output=0x00
+Row[7]: Input=0x27, Output=0x00
+
+=== Verifying Normal Mode Delays ===
+PASS: Row[0] immediate output correct
+Row[1]: Output=0x21 (Delayed by 1 cycles)
+Row[2]: Output=0xa2 (Delayed by 2 cycles)
+Row[3]: Output=0x00 (Delayed by 3 cycles)
+Row[4]: Output=0x00 (Delayed by 4 cycles)
+Row[5]: Output=0x00 (Delayed by 5 cycles)
+Row[6]: Output=0x00 (Delayed by 6 cycles)
+Row[7]: Output=0x00 (Delayed by 7 cycles)
+
+Time: 80000 | test_mode: 0 | rst_n: 1 | Input[0]: 30 | Output[0]: 30
+
+===            Normal Mode - Cycle 2 ===
+Time: 90000
+Row[0]: Input=0x30, Output=0x30
+Row[1]: Input=0x31, Output=0x31
+Row[2]: Input=0x32, Output=0x22
+Row[3]: Input=0x33, Output=0xa3
+Row[4]: Input=0x34, Output=0x00
+Row[5]: Input=0x35, Output=0x00
+Row[6]: Input=0x36, Output=0x00
+Row[7]: Input=0x37, Output=0x00
+
+Time: 90000 | test_mode: 0 | rst_n: 1 | Input[0]: 40 | Output[0]: 40
+
+===            Normal Mode - Cycle 3 ===
+Time: 100000
+Row[0]: Input=0x40, Output=0x40
+Row[1]: Input=0x41, Output=0x41
+Row[2]: Input=0x42, Output=0x32
+Row[3]: Input=0x43, Output=0x23
+Row[4]: Input=0x44, Output=0xa4
+Row[5]: Input=0x45, Output=0x00
+Row[6]: Input=0x46, Output=0x00
+Row[7]: Input=0x47, Output=0x00
+
+Time: 100000 | test_mode: 0 | rst_n: 1 | Input[0]: 50 | Output[0]: 50
+
+===            Normal Mode - Cycle 4 ===
+Time: 110000
+Row[0]: Input=0x50, Output=0x50
+Row[1]: Input=0x51, Output=0x51
+Row[2]: Input=0x52, Output=0x42
+Row[3]: Input=0x53, Output=0x33
+Row[4]: Input=0x54, Output=0x24
+Row[5]: Input=0x55, Output=0xa5
+Row[6]: Input=0x56, Output=0x00
+Row[7]: Input=0x57, Output=0x00
+
+Time: 110000 | test_mode: 0 | rst_n: 1 | Input[0]: 60 | Output[0]: 60
+
+===            Normal Mode - Cycle 5 ===
+Time: 120000
+Row[0]: Input=0x60, Output=0x60
+Row[1]: Input=0x61, Output=0x61
+Row[2]: Input=0x62, Output=0x52
+Row[3]: Input=0x63, Output=0x43
+Row[4]: Input=0x64, Output=0x34
+Row[5]: Input=0x65, Output=0x25
+Row[6]: Input=0x66, Output=0xa6
+Row[7]: Input=0x67, Output=0x00
+
+Time: 120000 | test_mode: 0 | rst_n: 1 | Input[0]: 70 | Output[0]: 70
+
+===            Normal Mode - Cycle 6 ===
+Time: 130000
+Row[0]: Input=0x70, Output=0x70
+Row[1]: Input=0x71, Output=0x71
+Row[2]: Input=0x72, Output=0x62
+Row[3]: Input=0x73, Output=0x53
+Row[4]: Input=0x74, Output=0x44
+Row[5]: Input=0x75, Output=0x35
+Row[6]: Input=0x76, Output=0x26
+Row[7]: Input=0x77, Output=0xa7
+
+Time: 130000 | test_mode: 0 | rst_n: 1 | Input[0]: 80 | Output[0]: 80
+
+===            Normal Mode - Cycle 7 ===
+Time: 140000
+Row[0]: Input=0x80, Output=0x80
+Row[1]: Input=0x81, Output=0x81
+Row[2]: Input=0x82, Output=0x72
+Row[3]: Input=0x83, Output=0x63
+Row[4]: Input=0x84, Output=0x54
+Row[5]: Input=0x85, Output=0x45
+Row[6]: Input=0x86, Output=0x36
+Row[7]: Input=0x87, Output=0x27
+
+Time: 140000 | test_mode: 0 | rst_n: 1 | Input[0]: 90 | Output[0]: 90
+
+===            Normal Mode - Cycle 8 ===
+Time: 150000
+Row[0]: Input=0x90, Output=0x90
+Row[1]: Input=0x91, Output=0x91
+Row[2]: Input=0x92, Output=0x82
+Row[3]: Input=0x93, Output=0x73
+Row[4]: Input=0x94, Output=0x64
+Row[5]: Input=0x95, Output=0x55
+Row[6]: Input=0x96, Output=0x46
+Row[7]: Input=0x97, Output=0x37
+
+
+>>>>> Test 3: Mode Switching Test <<<<<
+Time: 150000 | test_mode: 1 | rst_n: 1 | Input[0]: f0 | Output[0]: f0
+
+===        Mode Switch: Normal->Test ===
+Time: 160000
+Row[0]: Input=0xf0, Output=0xf0
+Row[1]: Input=0xf1, Output=0xf1
+Row[2]: Input=0xf2, Output=0xf2
+Row[3]: Input=0xf3, Output=0xf3
+Row[4]: Input=0xf4, Output=0xf4
+Row[5]: Input=0xf5, Output=0xf5
+Row[6]: Input=0xf6, Output=0xf6
+Row[7]: Input=0xf7, Output=0xf7
+
+=== Verifying Test Mode (Parallel Output) ===
+PASS: Test mode verification passed
+
+Time: 160000 | test_mode: 0 | rst_n: 1 | Input[0]: f0 | Output[0]: f0
+
+===        Mode Switch: Test->Normal ===
+Time: 170000
+Row[0]: Input=0xf0, Output=0xf0
+Row[1]: Input=0xf1, Output=0xf1
+Row[2]: Input=0xf2, Output=0xf2
+Row[3]: Input=0xf3, Output=0x93
+Row[4]: Input=0xf4, Output=0x84
+Row[5]: Input=0xf5, Output=0x75
+Row[6]: Input=0xf6, Output=0x66
+Row[7]: Input=0xf7, Output=0x57
+
+
+>>>>> Test 4: Reset Function Test <<<<<
+Time: 170000 | test_mode: 0 | rst_n: 0 | Input[0]: cc | Output[0]: cc
+Time: 180000 | test_mode: 0 | rst_n: 1 | Input[0]: cc | Output[0]: cc
+
+===        After Reset - First Cycle ===
+Time: 190000
+Row[0]: Input=0xcc, Output=0xcc
+Row[1]: Input=0xcd, Output=0xcd
+Row[2]: Input=0xce, Output=0x00
+Row[3]: Input=0xcf, Output=0x00
+Row[4]: Input=0xd0, Output=0x00
+Row[5]: Input=0xd1, Output=0x00
+Row[6]: Input=0xd2, Output=0x00
+Row[7]: Input=0xd3, Output=0x00
+
+
+>>>>> Test 5: Boundary Value Test <<<<<
+Time: 190000 | test_mode: 1 | rst_n: 1 | Input[0]: 00 | Output[0]: 00
+
+===        Boundary Test - All Zeros ===
+Time: 200000
+Row[0]: Input=0x00, Output=0x00
+Row[1]: Input=0x01, Output=0x01
+Row[2]: Input=0x02, Output=0x02
+Row[3]: Input=0x03, Output=0x03
+Row[4]: Input=0x04, Output=0x04
+Row[5]: Input=0x05, Output=0x05
+Row[6]: Input=0x06, Output=0x06
+Row[7]: Input=0x07, Output=0x07
+
+Time: 200000 | test_mode: 1 | rst_n: 1 | Input[0]: ff | Output[0]: ff
+
+===         Boundary Test - All Ones ===
+Time: 210000
+Row[0]: Input=0xff, Output=0xff
+Row[1]: Input=0x00, Output=0x00
+Row[2]: Input=0x01, Output=0x01
+Row[3]: Input=0x02, Output=0x02
+Row[4]: Input=0x03, Output=0x03
+Row[5]: Input=0x04, Output=0x04
+Row[6]: Input=0x05, Output=0x05
+Row[7]: Input=0x06, Output=0x06
+
+
+==========================================
+Buffer Module Test Complete
+==========================================
+$finish called at time : 260 ns : File "C:/Project/STRAIT/tb_Buffer.v" Line 251
