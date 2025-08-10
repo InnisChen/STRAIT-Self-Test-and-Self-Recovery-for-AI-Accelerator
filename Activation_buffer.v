@@ -1,35 +1,42 @@
 // Buffer.v
 // use generate
+// input from activation_mem and BIST 
+// use test_mode signal to choose input source
 
-module Buffer #(
+module Activation_buffer #(
     parameter SYSTOLIC_SIZE = 8,
     parameter ACTIVATION_WIDTH = 8
 ) (
     input clk,
     input rst_n,
-    input test_mode,    // 0: 正常模式45度, 1: 測試模式平行送入
-    input [SYSTOLIC_SIZE*ACTIVATION_WIDTH-1:0] activation_in_flat,
+    input test_mode,    // 0: 正常模式45度, 1: 測試模式 送出bist給的data
 
-    output [SYSTOLIC_SIZE*ACTIVATION_WIDTH-1:0] activation_out_flat
+    // from scan data
+    input [SYSTOLIC_SIZE*ACTIVATION_WIDTH-1:0] activation_in_test_flat, // 考慮輸入是否縮減成 [ACTIVATION_WIDTH-1:0] ，在bist內部複製訊號成flat就好。 因測試activation都是相同的
+
+    // from activation_mem  (由外部先送到activation_mem再到buffer)
+    input [SYSTOLIC_SIZE*ACTIVATION_WIDTH-1:0] activation_in_activationmem_flat,  // from outside to activation_mem to buffer
+
+    output [SYSTOLIC_SIZE*ACTIVATION_WIDTH-1:0] activation_out_flat // 送到systolic array
 );
 
     // 動態分解輸入數據
-    wire [ACTIVATION_WIDTH-1:0] activation_in [0:SYSTOLIC_SIZE-1];
+    wire [ACTIVATION_WIDTH-1:0] activation_in_test [0:SYSTOLIC_SIZE-1];
+    wire [ACTIVATION_WIDTH-1:0] activation_in_activationmem [0:SYSTOLIC_SIZE-1];
     wire [ACTIVATION_WIDTH-1:0] activation_out [0:SYSTOLIC_SIZE-1];
     
-    genvar k;
+    genvar i;
     generate
-        for (k = 0; k < SYSTOLIC_SIZE; k = k + 1) begin : in_out_split
-            assign activation_in[k] = activation_in_flat[k*ACTIVATION_WIDTH +: ACTIVATION_WIDTH];
-            assign activation_out_flat[k*ACTIVATION_WIDTH +: ACTIVATION_WIDTH] = activation_out[k];
+        for (i = 0; i < SYSTOLIC_SIZE; i = i + 1) begin : in_out_split
+            assign activation_in_test[i] = activation_in_test_flat[i*ACTIVATION_WIDTH +: ACTIVATION_WIDTH];
+            assign activation_in_activationmem[i] = activation_in_activationmem_flat[i*ACTIVATION_WIDTH +: ACTIVATION_WIDTH];
+
+            assign activation_out_flat[i*ACTIVATION_WIDTH +: ACTIVATION_WIDTH] = activation_out[i];
         end
     endgenerate
 
-    // Row 0: 直接輸出，沒有registers
-    assign activation_out[0] = activation_in[0];
 
     // Row 1 到 Row (SYSTOLIC_SIZE-1): 每行宣告所需數量的registers
-    genvar i;
     integer j;
     generate
         for (i = 1; i < SYSTOLIC_SIZE; i = i + 1) begin : row_gen
@@ -43,9 +50,10 @@ module Buffer #(
                     for (j = 0; j < i; j = j + 1) begin
                         shift_regs[j] <= {ACTIVATION_WIDTH{1'b0}};
                     end
-                end else begin
-                    // 輸入到第一個register
-                    shift_regs[0] <= activation_in[i];
+                end 
+                else begin
+                    // 輸入到該row的第一個register
+                    shift_regs[0] <= activation_in_activationmem[i];
                     
                     // Shift register操作：從第二個開始
                     for (j = 1; j < i; j = j + 1) begin
@@ -53,13 +61,87 @@ module Buffer #(
                     end
                 end
             end
-            
+        end
+    endgenerate
+
+
+    // Row 0
+    assign activation_out[0] = test_mode ? activation_in_test[0] : activation_in_activationmem[0];
+
+    // Row 1 to Row (SYSTOLIC_SIZE-1)
+    generate
+        for (i = 1; i < SYSTOLIC_SIZE; i = i + 1) begin : activation_out_gen
             // 輸出選擇：根據test_mode決定
-            assign activation_out[i] = test_mode ? activation_in[i] : shift_regs[i-1];
+            assign activation_out[i] = test_mode ? activation_in_test[i] : shift_regs[i-1];
         end
     endgenerate
 
 endmodule
+
+// // Buffer.v
+// // use generate
+// // only input from activation_mem
+// module Buffer #(
+//     parameter SYSTOLIC_SIZE = 8,
+//     parameter ACTIVATION_WIDTH = 8
+// ) (
+//     input clk,
+//     input rst_n,
+//     input test_mode,    // 0: 正常模式45度, 1: 測試模式平行送入
+//     input [SYSTOLIC_SIZE*ACTIVATION_WIDTH-1:0] activation_in_flat,
+
+//     output [SYSTOLIC_SIZE*ACTIVATION_WIDTH-1:0] activation_out_flat
+// );
+
+//     // 動態分解輸入數據
+//     wire [ACTIVATION_WIDTH-1:0] activation_in [0:SYSTOLIC_SIZE-1];
+//     wire [ACTIVATION_WIDTH-1:0] activation_out [0:SYSTOLIC_SIZE-1];
+    
+//     genvar k;
+//     generate
+//         for (k = 0; k < SYSTOLIC_SIZE; k = k + 1) begin : in_out_split
+//             assign activation_in[k] = activation_in_flat[k*ACTIVATION_WIDTH +: ACTIVATION_WIDTH];
+//             assign activation_out_flat[k*ACTIVATION_WIDTH +: ACTIVATION_WIDTH] = activation_out[k];
+//         end
+//     endgenerate
+
+//     // Row 0: 直接輸出，沒有registers
+//     assign activation_out[0] = activation_in[0];
+
+//     // Row 1 到 Row (SYSTOLIC_SIZE-1): 每行宣告所需數量的registers
+//     genvar i;
+//     integer j;
+//     generate
+//         for (i = 1; i < SYSTOLIC_SIZE; i = i + 1) begin : row_gen
+//             // 第i行需要i個registers
+//             reg [ACTIVATION_WIDTH-1:0] shift_regs [0:i-1];
+            
+//             // Shift register邏輯
+//             always @(posedge clk or negedge rst_n) begin
+//                 if (!rst_n) begin
+//                     // 重置該行的所有registers
+//                     for (j = 0; j < i; j = j + 1) begin
+//                         shift_regs[j] <= {ACTIVATION_WIDTH{1'b0}};
+//                     end
+//                 end else begin
+//                     // 輸入到第一個register
+//                     shift_regs[0] <= activation_in[i];
+                    
+//                     // Shift register操作：從第二個開始
+//                     for (j = 1; j < i; j = j + 1) begin
+//                         shift_regs[j] <= shift_regs[j-1];
+//                     end
+//                 end
+//             end
+            
+//             // 輸出選擇：根據test_mode決定
+//             assign activation_out[i] = test_mode ? activation_in[i] : shift_regs[i-1];
+//         end
+//     endgenerate
+
+// endmodule
+
+
 
 
 // // Buffer.v

@@ -12,7 +12,7 @@ module bisr_weight_allocation #(
     input wire [SYSTOLIC_SIZE*SYSTOLIC_SIZE-1:0] envm_faulty_patterns_flat,
     
     // 權重輸入和配置介面
-    input wire weight_start,                                    // 開始權重配置的信號
+    input wire allocation_start,                                    // 開始權重配置的信號，因不可能每次新權重來都要rst一次，因此需要該訊號用來初始化
     input wire [SYSTOLIC_SIZE*WEIGHT_WIDTH-1:0] input_weights,
     input wire weight_valid,
     
@@ -67,7 +67,7 @@ module bisr_weight_allocation #(
             mapping_addr <= {ADDR_WIDTH{1'b0}};
             mapping_addr_valid <= 1'b0;
         end
-        else if (weight_start) begin
+        else if (allocation_start) begin
             faulty_pe_addr <= {ADDR_WIDTH{1'b0}};
             mapping_addr <= {ADDR_WIDTH{1'b0}};
             mapping_addr_valid <= 1'b0;
@@ -87,6 +87,7 @@ module bisr_weight_allocation #(
     // Recovery result check
     assign recovery_done = (faulty_pe_addr == SYSTOLIC_SIZE-1) && !weight_valid;
     assign recovery_success = recovery_done && ~(|valid_bits_out);
+    
     
     // Instantiate Faulty PE Storage
     faulty_pe_storage #(
@@ -142,7 +143,7 @@ module bisr_weight_allocation #(
         .envm_wr_en(envm_wr_en),
         
         // Query interface
-        .input_addr(read_addr),
+        .read_addr(read_addr),
         .mapped_addr(mapped_read_addr),
         
         // Allocation status output

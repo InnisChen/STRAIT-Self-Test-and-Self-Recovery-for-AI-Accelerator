@@ -7,13 +7,12 @@ module Diagnostic_loop_chains #(
     input clk,
     input rst_n,
     input start_en,
-    input [SYSTOLIC_SIZE-1:0] col_inputs,  // 使用向量輸入，大小可變
+    input [SYSTOLIC_SIZE-1:0] col_inputs,
     output [SYSTOLIC_SIZE-1:0] single_pe_detection, //單row pe輸出
     output [SYSTOLIC_SIZE-1:0] column_fault_detection,  // 每個column的fault檢測輸出
     output [SYSTOLIC_SIZE-1:0] row_fault_detection,  // 每個row的fault檢測輸出
-    
-
-    output reg [ADDR_WIDTH-1:0] counter //輸出給envm讀取第幾個row的錯誤資訊，因envm 沒有rst沒辦法rst counter 訊號
+    // output reg [ADDR_WIDTH-1:0] counter //輸出給envm讀取第幾個row的錯誤資訊，因envm 沒有rst沒辦法rst counter 訊號
+    // 改由bist送addr
 );
     //看cycle修正要輸出哪一列的PE(or gate後面 或 第一個reg後)
     assign single_pe_detection = col_0;
@@ -53,7 +52,8 @@ module Diagnostic_loop_chains #(
         end
     endgenerate
 
-    // Row fault detector
+
+    //----------------------- Row fault detector -----------------------
     wire row_and_result;
     wire row_detect_0;
     reg [SYSTOLIC_SIZE-1:0] row_detect_reg;
@@ -79,7 +79,9 @@ module Diagnostic_loop_chains #(
         else;
     end
 
-    // Column fault detector
+
+    //----------------------- Column fault detector -----------------------
+    wire row_and_result;
     wire [SYSTOLIC_SIZE-1:0] col_and_result;
     reg [SYSTOLIC_SIZE-1:0] column_detect;
 
@@ -105,20 +107,20 @@ module Diagnostic_loop_chains #(
         else;
     end
 
-    always @(posedge clk or negedge rst_n) begin
-        if(!rst_n) begin
-            counter <= {ADDR_WIDTH{1'b0}};
-        end
-        else if(start_en) begin
-            if(counter == SYSTOLIC_SIZE - 1) begin
-                counter <= {ADDR_WIDTH{1'b0}}; // Reset counter to 0
-            end
-            else begin
-                counter <= counter + 1; // Increment counter
-            end
-        end
-        else;
-    end
+    // always @(posedge clk or negedge rst_n) begin
+    //     if(!rst_n) begin
+    //         counter <= {ADDR_WIDTH{1'b0}};
+    //     end
+    //     else if(start_en) begin
+    //         if(counter == SYSTOLIC_SIZE - 1) begin
+    //             counter <= {ADDR_WIDTH{1'b0}}; // Reset counter to 0
+    //         end
+    //         else begin
+    //             counter <= counter + 1; // Increment counter
+    //         end
+    //     end
+    //     else;
+    // end
 
     // 輸出信號連接
     assign column_fault_detection = column_detect;

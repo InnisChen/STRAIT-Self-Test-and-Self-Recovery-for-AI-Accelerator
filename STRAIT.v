@@ -21,15 +21,24 @@ module STRAIT #(
     
     // 正常使用systolic array 時的data
     input weight_valid, // 送給bisr
-    input [SYSTOLIC_SIZE*WEIGHT_WIDTH-1:0] input_weight_flat, // 送給bisr
-    input [SYSTOLIC_SIZE*ACTIVATION_WIDTH-1:0] input_activation_flat,
-    input [SYSTOLIC_SIZE*PARTIAL_SUM_WIDTH-1:0] input_partial_sum_in_flat,
+    input [SYSTOLIC_SIZE*WEIGHT_WIDTH-1:0] input_weight_flat, // 給bisr
+    input [SYSTOLIC_SIZE*ACTIVATION_WIDTH-1:0] input_activation_flat, // 給activation_mem),
+    input [SYSTOLIC_SIZE*PARTIAL_SUM_WIDTH-1:0] input_partial_sum_flat, // 給 Weight_partialsum_buffer
+
+    input activation_valid, // 送給bist開始計數地址，再送給activation_mem當寫入地址
+
+    // 外部送入要讀取accumulator的地址
+    input [ADDR_WIDTH-1:0] rd_addr, // 從外部送入讀取地址，讀取accumulator的部分和輸出
     
     // output
-    output [SYSTOLIC_SIZE*PARTIAL_SUM_WIDTH-1:0] partial_sum_out_flat,
+    output [SYSTOLIC_SIZE*PARTIAL_SUM_WIDTH-1:0] partial_sum_outputs_flat_outside,
     output MBIST_test_result,
-    output LBIST_test_result
-);
+    output LBIST_test_result,
+
+    output recovery_success,    // 從bisr送出
+    output recovery_done        // 從bisr送出
+)
+    
 
     // eNVM 
     eNVM #(
@@ -43,19 +52,22 @@ module STRAIT #(
     ) eNVM_inst (
         // input 
         .clk(clk),
-        .test_type(test_type), // 0: SA , 1: TD
-        .test_counter(test_counter), // 需要第幾個test_pattern
-        .detection_en(detection_en),
-        .counter(counter_dlc_envm), 
+        .test_type(test_type), // 0: SA , 1: TD    from hybrid_bist
+        .test_counter(test_counter_bist_envm),      // 需要第幾個test_pattern
+        .detection_en(detection_en_bist_envm),      // bist告知envm可以開始讀DLC的資料
+        .detection_addr(detection_addr_bist_envm),      // 需要讀取第幾個row的錯誤資訊
+
         .single_pe_detection(single_pe_detection_dlc_envm),
         .column_fault_detection(column_fault_detection_dlc_envm),   
-        .row_fault_detection(row_fault_detection_dlc_envm),      //每次1bit 傳n次
+        .row_fault_detection(row_fault_detection_dlc_envm),     //每次1bit 傳n次
         
         // output
         .envm_faulty_patterns_flat(envm_faulty_patterns_flat_envm_bisr),    // from envm to bisr
-        .Scan_data_weight(Scan_data_weight),
-        .Scan_data_activation(Scan_data_activation),
-        .Scan_data_answer(Scan_data_answer)
+
+        // test_data 先送到bist再分配給weight 或 activation 的 buffer ，波形比較好觀察
+        .Scan_data_weight(Scan_data_weight_envm_bist),  // from eNVM to hybrid_bist
+        .Scan_data_activation(Scan_data_activation_envm_bist),  // from eNVM to hybrid_bist
+        .Scan_data_answer(Scan_data_answer_envm_bist)   // from eNVM to hybrid_bist
     );
 
 
@@ -69,20 +81,40 @@ module STRAIT #(
         // input 
         .clk(clk),
         .rst_n(rst_n),
-        .envm_wr_en(envm_wr_en),
+        .envm_wr_en(envm_wr_en_bist_bisr),    // 之後改成wr_en
         .envm_faulty_patterns_flat(envm_faulty_patterns_flat_envm_bisr),    // from envm to bisr
-        .weight_start(weight_start),                                    // 開始權重配置的信號
-        .input_weights(input_weight_flat),
-        .weight_valid(weight_valid),
-        .read_addr(read_addr),
+        .allocation_start(allocation_start_bist_bisr),                      // 開始權重配置的信號，從bist送
+        .input_weights(input_weight_flat),  // from outside
+        .weight_valid(weight_valid),    // from outside
+        .read_addr(read_addr_bist_bisr),    // 從bist的address generator 給，正常配置時使用
 
         // output
-        .output_weights_flat(output_weights_flat_bisr_array),   //from bisr to systolic array
+        .output_weights_flat(weights_flat_bisr_buffer),   // from bisr to systolic array
         .output_mapped_addr(output_mapped_addr_bisr_activationmem),  //from bisr to activation_mem
-        .recovery_success(recovery_success),
-        .recovery_done(recovery_done)
+        .recovery_success(recovery_success),    // 送到外部
+        .recovery_done(recovery_done)           // 送到外部
     );
 
+    // Weight_buffer
+    Weight_partialsum_buffer #(
+        .SYSTOLIC_SIZE(SYSTOLIC_SIZE),
+        .WEIGHT_WIDTH(WEIGHT_WIDTH),
+        .ACTIVATION_WIDTH(ACTIVATION_WIDTH),
+        .PARTIAL_SUM_WIDTH(PARTIAL_SUM_WIDTH)
+    ) Weight_partialsum_buffer_inst (
+        // input 
+        .test_mode(test_mode),    // 0: 正常模式45度, 1: 測試模式平行送入
+        .weight_in_test_flat(weight_in_test_flat_bist_buffer), // 考慮輸入是否縮減成 [WEIGHT_WIDTH-1:0] ，在bist內部複製訊號成flat就好。 因測試權重都是相同的
+        .weight_in_bisr_flat(weights_flat_bisr_buffer), // 從bisr送入的權重
+        .partial_sum_in_test_flat(partial_sum_test_flat_bist_buffer),   // 從bist送入測試的資料
+        .partial_sum_in_outside_flat(input_partial_sum_flat),   // 從外部送入
+        .pe_disable_in(pe_disable_in_bisr_buffer), // 正常使用時，每個PE是否disable，從bisr的faulty_pe_storage送入
+
+        // output
+        .weight_out_flat(weight_out_flat_buffer_array), // 輸出到systolic array
+        .partial_sum_out_flat(partial_sum_flat_buffer_array),
+        .pe_disable_out(pe_disable_buffer_array) // 每個PE是否disable
+    );
 
     // Systolic Array (PE_STRAIT)
     Systolic_array #(
@@ -95,18 +127,21 @@ module STRAIT #(
         .clk(clk),
         .clk_w(clk_w),
         .rst_n(rst_n),
-        .scan_en(scan_en),
-        .PE_disable(PE_disable),
-        .weight_flat(output_weights_flat_bisr_array),
-        .activation_flat(activation_data_flat_activationmem_buffer),
-        .partial_sum_in_flat(partial_sum_in),
+        .scan_en(scan_en_bist_array),
+        .PE_disable(pe_disable_buffer_array),
+        .weight_flat(weight_out_flat_buffer_array),   // 正常使用從bisr，要考慮測試時權重是否依樣要從bisr，或是從bist再加多工器選擇
+        .activation_flat(activation_data_flat_buffer_array),
+        .partial_sum_in_flat(partial_sum_flat_buffer_array),  // 跟權重一起
 
         // output
-        .partial_sum_out_flat(partial_sum_out_flat)
+        .partial_sum_out_flat(partial_sum_flat_array_accumulator)   // from systolic array to accumulator
     );
 
 
-    // Accumulator
+    // Accumulator (Accumulator_mem)
+    // 記憶體組成，需要讀寫記憶體
+    assign partial_sum_outputs_flat_outside = test_mode ? {SYSTOLIC_SIZE*PARTIAL_SUM_WIDTH{1'b0}} : partial_sum_outputs_flat; // 正常使用時，從accumulator輸出部分和，測試模式時輸出0
+
     Accumulator #(
         .SYSTOLIC_SIZE(SYSTOLIC_SIZE),
         .WEIGHT_WIDTH(WEIGHT_WIDTH),
@@ -118,16 +153,16 @@ module STRAIT #(
         // input 
         .clk(clk),
         .rst_n(rst_n),
-        .wr_en(wr_en),
         .test_mode(test_mode),
-        .wr_addr(wr_addr),
-        .partial_sum_inputs_flat(partial_sum_inputs_flat),
-        .rd_addr(rd_addr),
+        .wr_en(wr_en_bist_accumulator),
+        .wr_addr(wr_addr_bist_accumulator),  // 正常使用時，可能要需要從bist的address generator 給
+        .partial_sum_inputs_flat(partial_sum_flat_array_accumulator),   // from systolic array to accumulator
+        .rd_addr_bist(rd_addr_bist_accumulator),  // 測試時用bist給讀取地址
+        .rd_addr_outside(rd_addr),  // 正常使用從外面送讀取地址
 
         // output
-        .partial_sum_outputs_flat(partial_sum_outputs_flat)
+        .partial_sum_outputs_flat(partial_sum_outputs_flat) // 1. 給bist的比較器 2. 給外部輸出計算結果
     );
-
 
     // Activation_mem
     Activation_mem #(
@@ -137,26 +172,27 @@ module STRAIT #(
     ) Activation_mem_inst (
         // input
         .clk(clk),
-        .wr_en(wr_en),
-        .wr_addr(wr_addr),
-        .activation_inputs_flat(input_activation_flat),  // 從外部輸入激活值
-        .rd_addr(output_mapped_addr_bisr_activationmem),    // from bisr to activation_mem
+        .wr_en(wr_en_bist_activationmem),
+        .wr_addr(wr_addr_bist_activationmem),
+        .activation_inputs_flat(input_activation_flat),  // 1. 從外部輸入激活值  (2. 從bist送入激活值 ， 在buffer選擇)
+        .rd_addr(output_mapped_addr_bisr_activationmem),    // from bisr的mapping_table 根據配置後的位置送到activation_mem
 
         // output
-        .activation_outputs_flat(activation_data_flat_activationmem_buffer)   // from activation_mem to systolic array
+        .activation_outputs_flat(activation_flat_activationmem_buffer)   // from activation_mem to systolic array
     );  
 
 
-    // Buffer (Activation buffer)
-    Buffer #(
+    // Activation_buffer
+    Activation_buffer #(
         .SYSTOLIC_SIZE(SYSTOLIC_SIZE),
         .ACTIVATION_WIDTH(ACTIVATION_WIDTH)
-    ) Activation_Buffer_inst (
+    ) Activation_buffer_inst (
         // input 
         .clk(clk),
         .rst_n(rst_n),
-        .test_mode(test_mode),    // 0: 正常模式45度, 1: 測試模式平行送入
-        .activation_in_flat(activation_data_flat_activationmem_buffer),   // from activation_mem to buffer
+        .test_mode(test_mode),    // 0: 正常模式45度, 1: 測試模式 送出bist給的data
+        .activation_in_test_flat(activation_in_test_flat_bist_buffer), // from bist to buffer
+        .activation_in_activationmem_flat(activation_flat_activationmem_buffer),  // from activation_mem to buffer
 
         // output
         .activation_out_flat(activation_data_flat_buffer_array)  // from buffer to systolic array
@@ -174,18 +210,17 @@ module STRAIT #(
         .MBIST_PATTERN_DEPTH(MBIST_PATTERN_DEPTH),
         .MAX_PATTERN_ADDR_WIDTH(MAX_PATTERN_ADDR_WIDTH)
     ) hybrid_bist_inst (
+        // input 
         .clk(clk),
         .rst_n(rst_n),
+        .START(START),
+        .test_mode(test_mode),    // 是否在測試模式
         .BIST_mode(BIST_mode),    // 0: MBIST, 1: LBIST
-        .test_type(test_type),                                   // 0: SA, 1: TD
-        .test_counter(test_counter),                             // eNVM pattern 索引
-        .td_pe_select(td_pe_select),                             // TD 測試時的 PE 選擇 (0-3)
-        .envm_weight(envm_weight),                               // 從 eNVM 來的權重
-        .envm_activation(envm_activation),                       // 從 eNVM 來的激活
-        .envm_answer(envm_answer),                               // 從 eNVM 來的預期結果
-        .scan_en(scan_en),                                       // 掃描使能信號
-        .MBIST_test_result(MBIST_test_result),
-        .LBIST_test_result(LBIST_test_result)
+        
+
+        // output 
+        .test_type(test_type),    // 0: SA, 1: TD
+
     );
 
 
@@ -197,14 +232,13 @@ module STRAIT #(
         // input
         .clk(clk),
         .rst_n(rst_n),
-        .start_en(start_en),    // 送到accumulator後啟動
-        .col_inputs(col_inputs),
+        .start_en(start_en_bist_dlc),    // 送到accumulator後啟動
+        .col_inputs(col_inputs_bist_dlc),   // from bist 的comparator
 
         // output
         .single_pe_detection(single_pe_detection_dlc_envm),
         .column_fault_detection(column_fault_detection_dlc_envm),
-        .row_fault_detection(row_fault_detection_dlc_envm),
-        .counter(counter_dlc_envm)   //輸出給envm讀取第幾個row的錯誤資訊，因envm 沒有rst沒辦法rst counter 訊號
+        .row_fault_detection(row_fault_detection_dlc_envm)
     );
     
 endmodule

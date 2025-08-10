@@ -18,8 +18,8 @@ module eNVM #(
     // input rst_n,
     input test_type, // 0: SA , 1: TD
     input [MAX_ADDR_WIDTH-1:0] test_counter, // 需要第幾個test_pattern
-    input detection_en,
-    input [ADDR_WIDTH-1:0] counter,
+    input detection_en,     // 是否啟用診斷模式
+    input [ADDR_WIDTH-1:0] detection_addr,
     input [SYSTOLIC_SIZE-1:0] single_pe_detection,
     input column_fault_detection,   //每次1bit 傳n次
     input row_fault_detection,      //...
@@ -52,9 +52,9 @@ module eNVM #(
 
     always @(posedge clk ) begin
         if(detection_en) begin
-            faulty_row_storage[counter] <= row_fault_detection;
-            faulty_column_storage[counter] <= column_fault_detection;
-            faulty_pe_storage[counter] <= single_pe_detection;
+            faulty_row_storage[detection_addr] <= row_fault_detection;
+            faulty_column_storage[detection_addr] <= column_fault_detection;
+            faulty_pe_storage[detection_addr] <= single_pe_detection;
         end
         else;
     end

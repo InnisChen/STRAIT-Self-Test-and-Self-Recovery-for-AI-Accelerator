@@ -11,13 +11,17 @@ module Accumulator #(
 ) (
     input clk,
     input rst_n,
-    input wr_en,
     input test_mode,
+    input wr_en,
     input [ADDR_WIDTH-1:0] wr_addr,  // 寫入地址
     input [PARTIAL_SUM_WIDTH*SYSTOLIC_SIZE-1:0] partial_sum_inputs_flat,  // 輸入部分和
-    input [ADDR_WIDTH-1:0] rd_addr,  // 讀取地址
+    input [ADDR_WIDTH-1:0] rd_addr_bist,  // 讀取地址
+    input [ADDR_WIDTH-1:0] rd_addr_outside,  // 測試時用bist給讀取地址
     output [PARTIAL_SUM_WIDTH*SYSTOLIC_SIZE-1:0] partial_sum_outputs_flat  // 輸出部分和
 );
+    // 讀取地址選擇
+    reg [ADDR_WIDTH-1:0] rd_addr;
+    assign rd_addr = test_mode ? rd_addr_bist : rd_addr_outside; // 根據test_mode選擇讀取地址
 
     reg [ADDR_WIDTH:0] wr_addr_en_reg [0:SYSTOLIC_SIZE-2];  //wr_addr , wr_en 合併訊號
     wire [ADDR_WIDTH:0] wr_addr_en_inputs [0:SYSTOLIC_SIZE-1];
