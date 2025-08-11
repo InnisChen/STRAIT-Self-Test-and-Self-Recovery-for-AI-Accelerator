@@ -9,8 +9,8 @@ module STRAIT #(
     parameter SA_TEST_PATTERN_DEPTH = 12,
     parameter TD_TEST_PATTERN_DEPTH = 16,
     parameter MBIST_PATTERN_DEPTH = 8,
-    parameter MAX_PATTERN_ADDR_WIDTH = $clog2(TD_TEST_PATTERN_DEPTH)
-) (
+    parameter MAX_PATTERN_ADDR_WIDTH = (SA_TEST_PATTERN_DEPTH > TD_TEST_PATTERN_DEPTH) ? $clog2(SA_TEST_PATTERN_DEPTH) : $clog2(TD_TEST_PATTERN_DEPTH)
+)(
     // input 
     input clk,
     input clk_w,
@@ -214,6 +214,7 @@ module STRAIT #(
         .MBIST_PATTERN_DEPTH(MBIST_PATTERN_DEPTH),
         .MAX_PATTERN_ADDR_WIDTH(MAX_PATTERN_ADDR_WIDTH)
     ) hybrid_bist_inst (
+        // input 
         // 基本控制信號 - inputs
         .clk(clk),
         .rst_n(rst_n),
@@ -228,18 +229,15 @@ module STRAIT #(
         .envm_partial_sum_in(Scan_data_partial_sum_in_envm_bist),
         .envm_answer(Scan_data_answer_envm_bist),
         
-        // 診斷電路回饋信號 - inputs
-        .single_pe_detection(single_pe_detection_dlc_envm),
-        .row_fault_detection(row_fault_detection_dlc_envm),
-        .column_fault_detection(column_fault_detection_dlc_envm),
-        
         // Accumulator 回饋信號 - inputs
+        // partial_sum_outputs_flat 1. 給bist的比較器 2. 給外部輸出計算結果
         .partial_sum_flat(partial_sum_outputs_flat),
         
+        // output
         // 與 eNVM 的介面 - outputs
-        .test_type(test_type),
-        .TD_answer_choose(TD_answer_choose_bist_envm),
+        .test_type(test_type),      // 0: SA, 1: TD
         .test_counter(test_counter_bist_envm),
+        .TD_answer_choose(TD_answer_choose_bist_envm),
         .detection_en(detection_en_bist_envm),
         .detection_addr(detection_addr_bist_envm),
         
@@ -260,6 +258,7 @@ module STRAIT #(
         
         // 診斷電路控制信號 - outputs
         .diagnosis_start_en(start_en_bist_dlc),
+        .compared_results(compared_results_bist_dlc), // 連接到 DLC
         
         // Accumulator 控制信號 (MBIST + LBIST 共用) - outputs
         .acc_wr_en(wr_en_bist_accumulator),
@@ -274,8 +273,7 @@ module STRAIT #(
         // 測試結果 - outputs
         .test_done(test_done),  // 測試完成信號，通知 test_bench
         .MBIST_test_result(MBIST_test_result),
-        .LBIST_test_result(LBIST_test_result),
-        .compared_results(compared_results_bist_dlc)  // 連接到 DLC
+        .LBIST_test_result(LBIST_test_result)
     );
 
 

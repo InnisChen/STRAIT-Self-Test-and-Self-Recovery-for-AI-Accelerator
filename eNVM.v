@@ -6,12 +6,8 @@ module eNVM #(
     parameter ACTIVATION_WIDTH = 8,
     parameter ADDR_WIDTH = $clog2(SYSTOLIC_SIZE),
     parameter PARTIAL_SUM_WIDTH = WEIGHT_WIDTH + ACTIVATION_WIDTH + $clog2(SYSTOLIC_SIZE),
-
     parameter SA_TEST_PATTERN_DEPTH = 12,
     parameter TD_TEST_PATTERN_DEPTH = 18,
-    // parameter SA_PATTERN_ADDR_WIDTH = $clog2(SA_TEST_PATTERN_DEPTH),
-    // parameter TD_PATTERN_ADDR_WIDTH = $clog2(TD_TEST_PATTERN_DEPTH),
-
     parameter MAX_PATTERN_ADDR_WIDTH = (SA_TEST_PATTERN_DEPTH > TD_TEST_PATTERN_DEPTH) ? $clog2(SA_TEST_PATTERN_DEPTH) : $clog2(TD_TEST_PATTERN_DEPTH)
 ) (
     input clk,

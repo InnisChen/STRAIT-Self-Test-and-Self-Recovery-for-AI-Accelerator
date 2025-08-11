@@ -25,23 +25,17 @@ module hybrid_bist #(
     input [WEIGHT_WIDTH-1:0] envm_weight,                   // 從 eNVM 來的權重
     input [ACTIVATION_WIDTH-1:0] envm_activation,           // 從 eNVM 來的激活
     input [PARTIAL_SUM_WIDTH-1:0] envm_partial_sum_in,      // 從 eNVM 來的部分和
-    input [PARTIAL_SUM_WIDTH-1:0] envm_answer,             // 從 eNVM 來的預期結果
-    
-    // 診斷電路回饋信號 - inputs
-    input [SYSTOLIC_SIZE-1:0] single_pe_detection,         // 單個PE的錯誤檢測結果
-    input row_fault_detection,                             // 行錯誤檢測結果
-    input column_fault_detection,                          // 列錯誤檢測結果
+    input [PARTIAL_SUM_WIDTH-1:0] envm_answer,              // 從 eNVM 來的預期結果
     
     // Accumulator 回饋信號 - inputs
     input [PARTIAL_SUM_WIDTH*SYSTOLIC_SIZE-1:0] partial_sum_flat, // Accumulator 讀資料
     
     // 與 eNVM 的介面 - outputs
-    output reg test_type,                                    // 0: SA, 1: TD
+    output reg test_type,                                   // 0: SA, 1: TD
     output reg [MAX_PATTERN_ADDR_WIDTH-1:0] test_counter,   // eNVM pattern 索引
-    output reg [1:0] td_pe_select,                          // TD 測試時的 PE 選擇 (0-3)
     output reg TD_answer_choose,                            // TD測試答案選擇 (0: launch, 1: capture)
     output reg detection_en,                                // 告知 eNVM 可以開始讀取診斷資料
-    output reg [ADDR_WIDTH-1:0] detection_addr,            // 診斷地址
+    output reg [ADDR_WIDTH-1:0] detection_addr,             // 診斷地址
     
     // 控制 Systolic Array 的信號 - outputs
     output reg scan_en,                                     // 掃描使能信號
@@ -49,53 +43,52 @@ module hybrid_bist #(
     // 給 BISR 的控制信號 - outputs
     output reg envm_wr_en,                                  // eNVM 寫入使能
     output reg allocation_start,                            // 開始權重配置信號
-    output reg [ADDR_WIDTH-1:0] read_addr,                 // BISR 讀取地址
+    output reg [ADDR_WIDTH-1:0] read_addr,                  // BISR 讀取地址
     
     // 給 Weight_partialsum_buffer 的控制信號 - outputs
-    output reg [SYSTOLIC_SIZE*WEIGHT_WIDTH-1:0] weight_in_test_flat,        // 測試權重
-    output reg [SYSTOLIC_SIZE*PARTIAL_SUM_WIDTH-1:0] partial_sum_test_flat,  // 測試部分和
+    output reg [SYSTOLIC_SIZE*WEIGHT_WIDTH-1:0] weight_in_test_flat,            // 測試權重
+    output reg [SYSTOLIC_SIZE*PARTIAL_SUM_WIDTH-1:0] partial_sum_test_flat,     // 測試部分和
     
     // 給 Activation_buffer 的激活控制信號 - outputs
-    output reg [SYSTOLIC_SIZE*ACTIVATION_WIDTH-1:0] activation_in_test_flat, // 測試激活
+    output reg [SYSTOLIC_SIZE*ACTIVATION_WIDTH-1:0] activation_in_test_flat,    // 測試激活
     
     // 診斷電路控制信號 - outputs
     output reg diagnosis_start_en,                          // 診斷使能信號
+    output [SYSTOLIC_SIZE-1:0] compared_results,            // 比較結果
     
     // Accumulator 控制信號 (MBIST + LBIST 共用) - outputs
     output reg acc_wr_en,                                   // Accumulator 寫使能  
-    output reg [ADDR_WIDTH-1:0] acc_wr_addr,               // Accumulator 寫地址
+    output reg [ADDR_WIDTH-1:0] acc_wr_addr,                // Accumulator 寫地址
     output reg [PARTIAL_SUM_WIDTH*SYSTOLIC_SIZE-1:0] acc_wr_data, // Accumulator 寫資料
-    output reg acc_test_mode,                               // Accumulator test mode
-    output reg [ADDR_WIDTH-1:0] acc_rd_addr,               // Accumulator 讀地址
+    output reg [ADDR_WIDTH-1:0] acc_rd_addr,                // Accumulator 讀地址
     
     // Activation_mem 控制信號 - outputs
     output reg activation_mem_wr_en,                        // Activation memory 寫使能
-    output reg [ADDR_WIDTH-1:0] activation_mem_wr_addr,    // Activation memory 寫地址
+    output reg [ADDR_WIDTH-1:0] activation_mem_wr_addr,     // Activation memory 寫地址
     
     // 測試結果 - outputs
     output reg test_done,                                   // 測試完成
-    output reg MBIST_test_result,                          // MBIST 測試結果
-    output reg LBIST_test_result,                          // LBIST 測試結果
-    output [SYSTOLIC_SIZE-1:0] compared_results             // 比較結果
+    output reg MBIST_test_result,                           // MBIST 測試結果
+    output reg LBIST_test_result                            // LBIST 測試結果
 );
 
     // 內部計數器
-    reg [MAX_PATTERN_ADDR_WIDTH-1:0] pattern_counter;      // pattern 計數器
-    reg [ADDR_WIDTH-1:0] memory_addr;                      // 記憶體地址計數器
-    reg [1:0] td_pe_counter;                               // TD 測試 PE 計數器 (0-3)
-    reg [ADDR_WIDTH-1:0] diagnosis_row_counter;            // 診斷行計數器
-    reg [3:0] shift_counter;                               // Shift 計數器 (0-7，8個cycle)
-    reg [3:0] shift_out_counter;                           // Shift Out 計數器 (0-7)
+    reg [MAX_PATTERN_ADDR_WIDTH-1:0] pattern_counter;       // pattern 計數器
+    reg [ADDR_WIDTH-1:0] memory_addr;                       // 記憶體地址計數器
+    reg [1:0] td_pe_counter;                                // TD 測試 PE 計數器 (0-3)
+    reg [1:0] td_pe_select;                                 // 當前使用的 PE 選擇
+    reg [ADDR_WIDTH-1:0] diagnosis_row_counter;             // 診斷行計數器
+    reg [3:0] shift_counter;                                // Shift 計數器 (0-7，8個cycle)
+    reg [3:0] shift_out_counter;                            // Shift Out 計數器 (0-7)
     
     // 正常運作時的地址計數器
-    reg [ADDR_WIDTH-1:0] normal_addr_counter;              // 正常運作地址計數器
+    reg [ADDR_WIDTH-1:0] normal_addr_counter;               // 正常運作地址計數器
     
     // 重複使用的暫存器
-    reg [PARTIAL_SUM_WIDTH-1:0] expected_data_reg;         // 通用預期資料暫存器
-    reg [PARTIAL_SUM_WIDTH-1:0] launch_expected_reg;       // TD Launch 預期結果
-    reg [PARTIAL_SUM_WIDTH-1:0] capture_expected_reg;      // TD Capture 預期結果
-    reg launch_check_phase;                                // Launch 檢查階段標記 (0: Launch, 1: Capture)
-    reg next_pattern_loading;                              // 下一個 pattern 載入標記
+    reg [PARTIAL_SUM_WIDTH-1:0] expected_data_reg;          // 通用預期資料暫存器
+    reg [PARTIAL_SUM_WIDTH-1:0] launch_expected_reg;        // TD Launch 預期結果
+    reg [PARTIAL_SUM_WIDTH-1:0] capture_expected_reg;       // TD Capture 預期結果
+    reg next_pattern_loading;                               // 下一個 pattern 載入標記
     
     // Memory Data Generator 的輸出
     wire [PARTIAL_SUM_WIDTH-1:0] mbist_data;
@@ -279,7 +272,6 @@ module hybrid_bist #(
             diagnosis_row_counter <= {ADDR_WIDTH{1'b0}};
             shift_counter <= 4'b0000;
             shift_out_counter <= 4'b0000;
-            launch_check_phase <= 1'b0;
             next_pattern_loading <= 1'b0;
         end
         else begin
@@ -321,7 +313,6 @@ module hybrid_bist #(
                     diagnosis_row_counter <= {ADDR_WIDTH{1'b0}};
                     shift_counter <= 4'b0000;
                     shift_out_counter <= 4'b0000;
-                    launch_check_phase <= 1'b0;
                     next_pattern_loading <= 1'b0;
                 end
                 
@@ -362,7 +353,6 @@ module hybrid_bist #(
                         end
                         
                         // 重置檢查階段標記
-                        launch_check_phase <= 1'b0;
                         next_pattern_loading <= 1'b0;
                     end
                     
@@ -472,7 +462,6 @@ module hybrid_bist #(
         // 預設值
         scan_en = 1'b0;
         acc_wr_en = 1'b0;
-        acc_test_mode = 1'b0;
         test_done = 1'b0;
         MBIST_test_result = 1'b0;
         LBIST_test_result = 1'b0;
@@ -500,16 +489,13 @@ module hybrid_bist #(
         case (current_state)
             MBIST_WRITE: begin
                 acc_wr_en = 1'b1;
-                acc_test_mode = 1'b1;
             end
             
             MBIST_READ: begin
-                acc_test_mode = 1'b1;
                 acc_rd_addr = memory_addr;
             end
             
             MBIST_CHECK: begin
-                acc_test_mode = 1'b1;
                 MBIST_test_result = ~(|compared_results);
                 
                 // 準備下個讀取地址
@@ -531,18 +517,15 @@ module hybrid_bist #(
             SA_SHIFT: begin
                 scan_en = 1'b1;
                 test_type = 1'b0;  // SA 測試
-                acc_test_mode = 1'b1;
             end
             
             SA_CAPTURE: begin
                 scan_en = 1'b0;
                 test_type = 1'b0;
-                acc_test_mode = 1'b1;
                 acc_rd_addr = {ADDR_WIDTH{1'b0}};
             end
             
             SA_CHECK: begin
-                acc_test_mode = 1'b1;
                 LBIST_test_result = ~(|compared_results);
                 
                 if (~(|compared_results) && pattern_counter < SA_TEST_PATTERN_DEPTH-1) begin
@@ -553,28 +536,24 @@ module hybrid_bist #(
             TD_SHIFT: begin
                 scan_en = 1'b1;
                 test_type = 1'b1;  // TD 測試
-                acc_test_mode = 1'b1;
                 TD_answer_choose = 1'b0;  // 準備讀取 Launch 答案
             end
             
             TD_LAUNCH: begin
                 scan_en = 1'b0;
                 test_type = 1'b1;
-                acc_test_mode = 1'b1;
                 TD_answer_choose = 1'b0;  // 使用 Launch 預期答案
             end
             
             TD_CAPTURE: begin
                 scan_en = 1'b0;
                 test_type = 1'b1;
-                acc_test_mode = 1'b1;
                 TD_answer_choose = 1'b1;  // 切換到 Capture 預期答案
             end
             
             TD_SHIFT_OUT: begin
                 scan_en = 1'b1;  // 開啟掃描輸出模式
                 test_type = 1'b1;
-                acc_test_mode = 1'b1;
                 acc_rd_addr = {ADDR_WIDTH{1'b0}};  // 固定讀取第一個位置
                 
                 // Pipeline 控制：從 cycle 3 開始準備下一個 pattern
