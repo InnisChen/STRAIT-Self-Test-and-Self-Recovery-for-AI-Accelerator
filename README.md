@@ -13,6 +13,8 @@
 ### STRAIT_PE
 
 ## hybrid_bist
+### Comparator
+### Memory_data_generator
 
 ### MBIST
 
