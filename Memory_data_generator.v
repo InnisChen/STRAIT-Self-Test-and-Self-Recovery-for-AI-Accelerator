@@ -31,33 +31,32 @@ endmodule
 
 
 /*
-// MBIST Test Patterns for Memory Data Generator
-// Based on March C- Algorithm
+// MBIST Test Data (Memory Test Patterns)
+// Based on March C- Algorithm for comprehensive memory testing
 // Format: 19-bit binary data (PARTIAL_SUM_WIDTH)
-// Pattern Index | Description | Binary Pattern
+// 8 patterns for different memory fault types
 
-// Pattern 0: All zeros (Background)
+// Pattern 0: All zeros (Background pattern)
 0000000000000000000
 
 // Pattern 1: All ones (Inverted background)
 1111111111111111111
 
-// Pattern 2: Alternating pattern 01010... (Coupling faults)
+// Pattern 2: Alternating 01010... (Coupling faults detection)
 0101010101010101010
 
-// Pattern 3: Alternating pattern 10101... (Inverted coupling)
+// Pattern 3: Alternating 10101... (Inverted coupling)
 1010101010101010101
 
-// Pattern 4: All zeros (Repeated for march algorithm)
-0000000000000000000
-
-// Pattern 5: All ones (Repeated for march algorithm)
-1111111111111111111
-
-// Pattern 6: Walking 1s pattern (Address-based pattern)
+// Pattern 4: Walking 1s pattern (Address decode faults)
 0000000000000000001
 
-// Pattern 7: Walking 0s pattern (Inverted address-based)
+// Pattern 5: Walking 0s pattern (Inverted address faults)
 1111111111111111110
 
+// Pattern 6: Checkerboard pattern (Adjacent cell interference)
+0011001100110011001
+
+// Pattern 7: Inverted checkerboard (Completion test)
+1100110011001100110
 */
