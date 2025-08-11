@@ -1,5 +1,5 @@
 // hybrid_bist.v
-// Enhanced version with proper TD testing strategy
+// Enhanced version with proper TD testing strategy and diagnosis integration
 
 module hybrid_bist #(
     parameter SYSTOLIC_SIZE = 8,
@@ -77,7 +77,6 @@ module hybrid_bist #(
     reg [ADDR_WIDTH-1:0] memory_addr;                       // 記憶體地址計數器
     reg [1:0] td_pe_counter;                                // TD 測試 PE 計數器 (0-3)
     reg [1:0] td_pe_select;                                 // 當前使用的 PE 選擇
-    reg [ADDR_WIDTH-1:0] diagnosis_row_counter;             // 診斷行計數器
     reg [3:0] shift_counter;                                // Shift 計數器 (0-7，8個cycle)
     reg [3:0] shift_out_counter;                            // Shift Out 計數器 (0-7)
     
@@ -93,7 +92,7 @@ module hybrid_bist #(
     // Memory Data Generator 的輸出
     wire [PARTIAL_SUM_WIDTH-1:0] mbist_data;
     
-    // 狀態機定義
+    // 狀態機定義 - 移除 DIAGNOSIS 和 DIAGNOSIS_STORE 狀態
     parameter   IDLE                = 5'b00000,
                 MBIST_START         = 5'b00001,
                 MBIST_WRITE         = 5'b00010,
@@ -107,11 +106,9 @@ module hybrid_bist #(
                 TD_LAUNCH           = 5'b01010,
                 TD_CAPTURE          = 5'b01011,
                 TD_SHIFT_OUT        = 5'b01100,
-                DIAGNOSIS           = 5'b01101,
-                DIAGNOSIS_STORE     = 5'b01110,
-                COMPLETE            = 5'b01111,
-                FAIL                = 5'b10000,
-                NORMAL_OPERATION    = 5'b10001;
+                COMPLETE            = 5'b01101,
+                FAIL                = 5'b01110,
+                NORMAL_OPERATION    = 5'b01111;
     
     reg [4:0] current_state, next_state;
     
@@ -157,7 +154,7 @@ module hybrid_bist #(
             end
             
             MBIST_CHECK: begin
-                if (|compared_results) begin  // 測試失敗
+                if (|compared_results) begin  // Memory test 測試失敗，直接fail
                     next_state = FAIL;
                 end else if (memory_addr == SYSTOLIC_SIZE-1 && pattern_counter == MBIST_PATTERN_DEPTH-1) begin
                     next_state = COMPLETE;  // MBIST測試完成
@@ -180,9 +177,8 @@ module hybrid_bist #(
             end
             
             SA_CHECK: begin
-                if (|compared_results) begin  // 有錯誤，啟動診斷
-                    next_state = DIAGNOSIS;
-                end else if (pattern_counter == SA_TEST_PATTERN_DEPTH-1) begin
+                // 診斷持續進行，不檢查錯誤狀態
+                if (pattern_counter == SA_TEST_PATTERN_DEPTH-1) begin
                     next_state = TD_SHIFT;  // SA 測試完成，開始 TD 測試
                 end else begin
                     next_state = SA_SHIFT;  // 下一個 SA pattern
@@ -205,32 +201,16 @@ module hybrid_bist #(
             
             TD_SHIFT_OUT: begin
                 if (shift_out_counter == 4'd7) begin  // 8 cycles shift out 完成
-                    // 檢查是否有錯誤需要診斷
-                    if (|compared_results) begin  // 在 shift out 過程中發現錯誤
-                        next_state = DIAGNOSIS;
-                    end
-                    // 檢查是否完成所有測試
-                    else if (td_pe_counter == 2'b11) begin  // 4個PE位置都測完
+                    // 檢查是否完成所有測試，不檢查錯誤狀態
+                    if (td_pe_counter == 2'b11) begin  // 4個PE位置都測完
                         if (pattern_counter == TD_TEST_PATTERN_DEPTH-1) begin  // 所有pattern都測完
-                            next_state = COMPLETE;
+                            next_state = COMPLETE;  // 直接完成
                         end else begin
                             next_state = TD_SHIFT;  // 下一個 TD pattern
                         end
                     end else begin
                         next_state = TD_SHIFT;  // 同一pattern，下一個PE位置
                     end
-                end
-            end
-            
-            DIAGNOSIS: begin
-                next_state = DIAGNOSIS_STORE;
-            end
-            
-            DIAGNOSIS_STORE: begin
-                if (diagnosis_row_counter == SYSTOLIC_SIZE-1) begin
-                    next_state = FAIL;  // 診斷完成，測試失敗
-                end else begin
-                    next_state = DIAGNOSIS;
                 end
             end
             
@@ -262,14 +242,14 @@ module hybrid_bist #(
             pattern_counter <= {MAX_PATTERN_ADDR_WIDTH{1'b0}};
             memory_addr <= {ADDR_WIDTH{1'b0}};
             td_pe_counter <= 2'b00;
-            diagnosis_row_counter <= {ADDR_WIDTH{1'b0}};
+            detection_addr <= {ADDR_WIDTH{1'b0}};
             normal_addr_counter <= {ADDR_WIDTH{1'b0}};
         end
         else if (START && test_mode) begin
             pattern_counter <= {MAX_PATTERN_ADDR_WIDTH{1'b0}};
             memory_addr <= {ADDR_WIDTH{1'b0}};
             td_pe_counter <= 2'b00;
-            diagnosis_row_counter <= {ADDR_WIDTH{1'b0}};
+            detection_addr <= {ADDR_WIDTH{1'b0}};
             shift_counter <= 4'b0000;
             shift_out_counter <= 4'b0000;
             next_pattern_loading <= 1'b0;
@@ -310,21 +290,20 @@ module hybrid_bist #(
                 LBIST_START: begin
                     pattern_counter <= {MAX_PATTERN_ADDR_WIDTH{1'b0}};
                     td_pe_counter <= 2'b00;
-                    diagnosis_row_counter <= {ADDR_WIDTH{1'b0}};
+                    detection_addr <= SYSTOLIC_SIZE - 1;  // 初始化為最大值（最後一個 ROW）
                     shift_counter <= 4'b0000;
                     shift_out_counter <= 4'b0000;
                     next_pattern_loading <= 1'b0;
                 end
                 
                 SA_CHECK: begin
-                    if (~(|compared_results)) begin  // SA 測試通過
-                        if (pattern_counter < SA_TEST_PATTERN_DEPTH-1) begin
-                            pattern_counter <= pattern_counter + 1;
-                        end else begin
-                            // SA 測試完成，準備 TD 測試
-                            pattern_counter <= {MAX_PATTERN_ADDR_WIDTH{1'b0}};
-                            td_pe_counter <= 2'b00;
-                        end
+                    // 不檢查錯誤，直接更新計數器
+                    if (pattern_counter < SA_TEST_PATTERN_DEPTH-1) begin
+                        pattern_counter <= pattern_counter + 1;
+                    end else begin
+                        // SA 測試完成，準備 TD 測試
+                        pattern_counter <= {MAX_PATTERN_ADDR_WIDTH{1'b0}};
+                        td_pe_counter <= 2'b00;
                     end
                 end
                 
@@ -360,11 +339,12 @@ module hybrid_bist #(
                     if (shift_out_counter >= 4'd2) begin
                         next_pattern_loading <= 1'b1;
                     end
-                end
-                
-                DIAGNOSIS_STORE: begin
-                    if (diagnosis_row_counter < SYSTOLIC_SIZE-1) begin
-                        diagnosis_row_counter <= diagnosis_row_counter + 1;
+                    
+                    // 診斷地址遞減邏輯 - 在最後一個 pattern 時執行
+                    if (td_pe_counter == 2'b11 && pattern_counter == TD_TEST_PATTERN_DEPTH-1) begin
+                        if (detection_addr > {ADDR_WIDTH{1'b0}}) begin
+                            detection_addr <= detection_addr - 1;  // 遞減計數
+                        end
                     end
                 end
                 
@@ -382,6 +362,7 @@ module hybrid_bist #(
     end
     
 // 測試向量產生 - 修正版本
+    integer i;
     always @(*) begin
         // 預設值：所有輸出為 0
         weight_in_test_flat = {SYSTOLIC_SIZE*WEIGHT_WIDTH{1'b0}};
@@ -401,7 +382,7 @@ module hybrid_bist #(
                     // Weight: 1,3,5,7 columns 送 0，0,2,4,6 columns 送 weight
                     // Activation: 1,3,5,7 rows 送 0，0,2,4,6 rows 送 activation
                     // Partial Sum: 所有位置都送 partial_sum_in
-                    for (int i = 0; i < SYSTOLIC_SIZE; i = i + 1) begin
+                    for (i = 0; i < SYSTOLIC_SIZE; i = i + 1) begin
                         if (i[0] == 1'b0) begin  // 偶數 columns (0,2,4,6)
                             weight_in_test_flat[i*WEIGHT_WIDTH +: WEIGHT_WIDTH] = envm_weight;
                         end
@@ -415,7 +396,7 @@ module hybrid_bist #(
                 2'b01: begin  // 測試右上 PE (0,1)
                     // Weight: 0,2,4,6 columns 送 0，1,3,5,7 columns 送 weight
                     // Activation: 1,3,5,7 rows 送 0，0,2,4,6 rows 送 activation
-                    for (int i = 0; i < SYSTOLIC_SIZE; i = i + 1) begin
+                    for (i = 0; i < SYSTOLIC_SIZE; i = i + 1) begin
                         if (i[0] == 1'b1) begin  // 奇數 columns (1,3,5,7)
                             weight_in_test_flat[i*WEIGHT_WIDTH +: WEIGHT_WIDTH] = envm_weight;
                         end
@@ -429,7 +410,7 @@ module hybrid_bist #(
                 2'b10: begin  // 測試左下 PE (1,0)
                     // Weight: 1,3,5,7 columns 送 0，0,2,4,6 columns 送 weight
                     // Activation: 0,2,4,6 rows 送 0，1,3,5,7 rows 送 activation
-                    for (int i = 0; i < SYSTOLIC_SIZE; i = i + 1) begin
+                    for (i = 0; i < SYSTOLIC_SIZE; i = i + 1) begin
                         if (i[0] == 1'b0) begin  // 偶數 columns (0,2,4,6)
                             weight_in_test_flat[i*WEIGHT_WIDTH +: WEIGHT_WIDTH] = envm_weight;
                         end
@@ -443,7 +424,7 @@ module hybrid_bist #(
                 2'b11: begin  // 測試右下 PE (1,1)
                     // Weight: 0,2,4,6 columns 送 0，1,3,5,7 columns 送 weight
                     // Activation: 0,2,4,6 rows 送 0，1,3,5,7 rows 送 activation
-                    for (int i = 0; i < SYSTOLIC_SIZE; i = i + 1) begin
+                    for (i = 0; i < SYSTOLIC_SIZE; i = i + 1) begin
                         if (i[0] == 1'b1) begin  // 奇數 columns (1,3,5,7)
                             weight_in_test_flat[i*WEIGHT_WIDTH +: WEIGHT_WIDTH] = envm_weight;
                         end
@@ -480,7 +461,6 @@ module hybrid_bist #(
         // 診斷電路控制信號預設值
         diagnosis_start_en = 1'b0;
         detection_en = 1'b0;
-        detection_addr = diagnosis_row_counter;
         
         // Activation memory 控制信號預設值
         activation_mem_wr_en = 1'b0;
@@ -523,12 +503,13 @@ module hybrid_bist #(
                 scan_en = 1'b0;
                 test_type = 1'b0;
                 acc_rd_addr = {ADDR_WIDTH{1'b0}};
+                diagnosis_start_en = 1'b1;  // 啟動診斷
             end
             
             SA_CHECK: begin
                 LBIST_test_result = ~(|compared_results);
                 
-                if (~(|compared_results) && pattern_counter < SA_TEST_PATTERN_DEPTH-1) begin
+                if (pattern_counter < SA_TEST_PATTERN_DEPTH-1) begin
                     acc_rd_addr = {ADDR_WIDTH{1'b0}};
                 end
             end
@@ -555,6 +536,12 @@ module hybrid_bist #(
                 scan_en = 1'b1;  // 開啟掃描輸出模式
                 test_type = 1'b1;
                 acc_rd_addr = {ADDR_WIDTH{1'b0}};  // 固定讀取第一個位置
+                diagnosis_start_en = 1'b1;  // 啟動診斷
+                
+                // 在最後一個 pattern 時開啟診斷儲存
+                if (td_pe_counter == 2'b11 && pattern_counter == TD_TEST_PATTERN_DEPTH-1) begin
+                    detection_en = 1'b1;  // 開啟診斷資料儲存
+                end
                 
                 // Pipeline 控制：從 cycle 3 開始準備下一個 pattern
                 if (next_pattern_loading) begin
@@ -582,31 +569,18 @@ module hybrid_bist #(
                 LBIST_test_result = ~(|compared_results);
             end
             
-            DIAGNOSIS: begin
-                diagnosis_start_en = 1'b1;
-            end
-            
-            DIAGNOSIS_STORE: begin
-                detection_en = 1'b1;
-                detection_addr = diagnosis_row_counter;
-            end
-            
             COMPLETE: begin
                 test_done = 1'b1;
                 if (!BIST_mode) begin
                     MBIST_test_result = 1'b1;
                 end else begin
-                    LBIST_test_result = 1'b1;
+                    LBIST_test_result = 1'b1;  // LBIST 不因錯誤而失敗
                 end
             end
             
             FAIL: begin
                 test_done = 1'b1;
-                if (!BIST_mode) begin
-                    MBIST_test_result = 1'b0;
-                end else begin
-                    LBIST_test_result = 1'b0;
-                end
+                MBIST_test_result = 1'b0;  // 只有 MBIST 會進入 FAIL
             end
             
             NORMAL_OPERATION: begin
@@ -665,7 +639,7 @@ module hybrid_bist #(
         .MBIST_PATTERN_DEPTH(MBIST_PATTERN_DEPTH),
         .MEMORY_PATTERN_ADDR_WIDTH(MEMORY_PATTERN_ADDR_WIDTH)
     ) memory_data_gen_inst (
-        .addr(pattern_counter[MEMORY_PATTERN_ADDR_WIDTH-1:0]),
+        .addr(pattern_counter[MEMORY_PATTERN_ADDR_WIDTH-1:0]),  // pattern_counter有MAX_PATTERN_ADDR_WIDTH bit ，抓後面MEMORY_PATTERN_ADDR_WIDTH bit 來用
         .MBIST_data(mbist_data)
     );
 
