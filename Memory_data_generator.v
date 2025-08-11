@@ -6,9 +6,10 @@ module Memory_data_generator #(
     parameter ACTIVATION_WIDTH = 8,
     parameter PARTIAL_SUM_WIDTH = WEIGHT_WIDTH + ACTIVATION_WIDTH + $clog2(SYSTOLIC_SIZE),
     parameter ADDR_WIDTH = $clog2(SYSTOLIC_SIZE),
-    parameter MBIST_PATTERN_DEPTH = 8  // March算法步驟數
+    parameter MBIST_PATTERN_DEPTH = 8,  // March算法步驟數
+    parameter MEMORY_PATTERN_ADDR_WIDTH = $clog2(MBIST_PATTERN_DEPTH)
 ) (
-    input [ADDR_WIDTH-1:0] addr,
+    input [MEMORY_PATTERN_ADDR_WIDTH-1:0] addr,
     output [PARTIAL_SUM_WIDTH-1:0] MBIST_data
 );
 
@@ -16,6 +17,7 @@ module Memory_data_generator #(
     reg [PARTIAL_SUM_WIDTH-1:0] Memory_test_data [0:MBIST_PATTERN_DEPTH-1];
     assign MBIST_data = Memory_test_data[addr]; 
 
+endmodule
 
     // 每個mem位置個別有測試資料
     // reg [SYSTOLIC_SIZE*PARTIAL_SUM_WIDTH-1:0] Memory_test_date [0:SYSTOLIC_SIZE-1];  
@@ -25,7 +27,7 @@ module Memory_data_generator #(
     // reg [PARTIAL_SUM_WIDTH-1:0] Memory_test_date ;  
     // assign MBIST_data = Memory_test_date;
 
-endmodule
+
 
 
 /*

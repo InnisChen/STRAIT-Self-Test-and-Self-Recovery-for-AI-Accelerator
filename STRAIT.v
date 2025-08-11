@@ -64,12 +64,13 @@ module STRAIT #(
         .row_fault_detection(row_fault_detection_dlc_envm),     //每次1bit 傳n次
         
         // output
-        .envm_faulty_patterns_flat(envm_faulty_patterns_flat_envm_bisr),    // from envm to bisr
+        .envm_faulty_patterns_flat(envm_faulty_patterns_flat_envm_bisr),
 
         // test_data 先送到bist再分配給weight 或 activation 的 buffer ，波形比較好觀察
-        .Scan_data_weight(Scan_data_weight_envm_bist),  // from eNVM to hybrid_bist
-        .Scan_data_activation(Scan_data_activation_envm_bist),  // from eNVM to hybrid_bist
-        .Scan_data_answer(Scan_data_answer_envm_bist)   // from eNVM to hybrid_bist
+        .Scan_data_weight(Scan_data_weight_envm_bist),
+        .Scan_data_activation(Scan_data_activation_envm_bist),
+        .Scan_data_partial_sum_in(Scan_data_partial_sum_in_envm_bist),
+        .Scan_data_answer(Scan_data_answer_envm_bist) 
     );
 
 
@@ -224,6 +225,7 @@ module STRAIT #(
         // 與 eNVM 的介面 - inputs
         .envm_weight(Scan_data_weight_envm_bist),
         .envm_activation(Scan_data_activation_envm_bist),
+        .envm_partial_sum_in(Scan_data_partial_sum_in_envm_bist),
         .envm_answer(Scan_data_answer_envm_bist),
         
         // 診斷電路回饋信號 - inputs

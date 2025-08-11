@@ -10,7 +10,8 @@ module hybrid_bist #(
     parameter SA_TEST_PATTERN_DEPTH = 12,
     parameter TD_TEST_PATTERN_DEPTH = 18,
     parameter MBIST_PATTERN_DEPTH = 8,
-    parameter MAX_PATTERN_ADDR_WIDTH = $clog2(TD_TEST_PATTERN_DEPTH)
+    parameter MAX_PATTERN_ADDR_WIDTH = (SA_TEST_PATTERN_DEPTH > TD_TEST_PATTERN_DEPTH) ? $clog2(SA_TEST_PATTERN_DEPTH) : $clog2(TD_TEST_PATTERN_DEPTH),
+    parameter MEMORY_PATTERN_ADDR_WIDTH = $clog2(MBIST_PATTERN_DEPTH)
 )(
     // 基本控制信號 - inputs
     input clk,
@@ -23,6 +24,7 @@ module hybrid_bist #(
     // 與 eNVM 的介面 - inputs
     input [WEIGHT_WIDTH-1:0] envm_weight,                   // 從 eNVM 來的權重
     input [ACTIVATION_WIDTH-1:0] envm_activation,           // 從 eNVM 來的激活
+    input [PARTIAL_SUM_WIDTH-1:0] envm_partial_sum_in,      // 從 eNVM 來的部分和
     input [PARTIAL_SUM_WIDTH-1:0] envm_answer,             // 從 eNVM 來的預期結果
     
     // 診斷電路回饋信號 - inputs
@@ -389,7 +391,7 @@ module hybrid_bist #(
         end
     end
     
-    // 測試向量產生
+// 測試向量產生 - 修正版本
     always @(*) begin
         // 預設值：所有輸出為 0
         weight_in_test_flat = {SYSTOLIC_SIZE*WEIGHT_WIDTH{1'b0}};
@@ -400,7 +402,7 @@ module hybrid_bist #(
             // SA 測試：所有 PE 使用相同資料
             weight_in_test_flat = {SYSTOLIC_SIZE{envm_weight}};
             activation_in_test_flat = {SYSTOLIC_SIZE{envm_activation}};
-            partial_sum_test_flat = {SYSTOLIC_SIZE*PARTIAL_SUM_WIDTH{1'b0}};
+            partial_sum_test_flat = {SYSTOLIC_SIZE{envm_partial_sum_in}};
         end
         else if (current_state == TD_SHIFT) begin
             // TD 測試：根據 td_pe_select 選擇性分佈資料
@@ -408,6 +410,7 @@ module hybrid_bist #(
                 2'b00: begin  // 測試左上 PE (0,0)
                     // Weight: 1,3,5,7 columns 送 0，0,2,4,6 columns 送 weight
                     // Activation: 1,3,5,7 rows 送 0，0,2,4,6 rows 送 activation
+                    // Partial Sum: 所有位置都送 partial_sum_in
                     for (int i = 0; i < SYSTOLIC_SIZE; i = i + 1) begin
                         if (i[0] == 1'b0) begin  // 偶數 columns (0,2,4,6)
                             weight_in_test_flat[i*WEIGHT_WIDTH +: WEIGHT_WIDTH] = envm_weight;
@@ -415,6 +418,7 @@ module hybrid_bist #(
                         if (i[0] == 1'b0) begin  // 偶數 rows (0,2,4,6)
                             activation_in_test_flat[i*ACTIVATION_WIDTH +: ACTIVATION_WIDTH] = envm_activation;
                         end
+                        partial_sum_test_flat[i*PARTIAL_SUM_WIDTH +: PARTIAL_SUM_WIDTH] = envm_partial_sum_in;
                     end
                 end
                 
@@ -428,6 +432,7 @@ module hybrid_bist #(
                         if (i[0] == 1'b0) begin  // 偶數 rows (0,2,4,6)
                             activation_in_test_flat[i*ACTIVATION_WIDTH +: ACTIVATION_WIDTH] = envm_activation;
                         end
+                        partial_sum_test_flat[i*PARTIAL_SUM_WIDTH +: PARTIAL_SUM_WIDTH] = envm_partial_sum_in;
                     end
                 end
                 
@@ -441,6 +446,7 @@ module hybrid_bist #(
                         if (i[0] == 1'b1) begin  // 奇數 rows (1,3,5,7)
                             activation_in_test_flat[i*ACTIVATION_WIDTH +: ACTIVATION_WIDTH] = envm_activation;
                         end
+                        partial_sum_test_flat[i*PARTIAL_SUM_WIDTH +: PARTIAL_SUM_WIDTH] = envm_partial_sum_in;
                     end
                 end
                 
@@ -454,6 +460,7 @@ module hybrid_bist #(
                         if (i[0] == 1'b1) begin  // 奇數 rows (1,3,5,7)
                             activation_in_test_flat[i*ACTIVATION_WIDTH +: ACTIVATION_WIDTH] = envm_activation;
                         end
+                        partial_sum_test_flat[i*PARTIAL_SUM_WIDTH +: PARTIAL_SUM_WIDTH] = envm_partial_sum_in;
                     end
                 end
             endcase
@@ -676,9 +683,10 @@ module hybrid_bist #(
         .ACTIVATION_WIDTH(ACTIVATION_WIDTH),
         .PARTIAL_SUM_WIDTH(PARTIAL_SUM_WIDTH),
         .ADDR_WIDTH(ADDR_WIDTH),
-        .MBIST_PATTERN_DEPTH(MBIST_PATTERN_DEPTH)
+        .MBIST_PATTERN_DEPTH(MBIST_PATTERN_DEPTH),
+        .MEMORY_PATTERN_ADDR_WIDTH(MEMORY_PATTERN_ADDR_WIDTH)
     ) memory_data_gen_inst (
-        .addr(pattern_counter[ADDR_WIDTH-1:0]),
+        .addr(pattern_counter[MEMORY_PATTERN_ADDR_WIDTH-1:0]),
         .MBIST_data(mbist_data)
     );
 
