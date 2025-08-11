@@ -19,6 +19,10 @@
 
 #### SA Test
 
+| 測試類型 | Weight | Activation | Partial_Sum_In | Answer |
+|----------|--------|------------|----------------|--------|
+| SA (test_type=0) | Weight | Activation | Partial_Sum_In | Expected_Answer |
+
 #### TD Test
 
 | 階段 | Weight | Activation | Partial_Sum_In | Answer |
