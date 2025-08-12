@@ -1,9 +1,7 @@
 // Activation_mem.v
 // 內部存的資訊是正常的資訊
-// 謝入地址透過bist送
+// 寫入地址透過bist送
 // 讀取地址根據BISR中的mapping_table來決定
-
-
 
 module Activation_mem #(
     parameter SYSTOLIC_SIZE = 8,  // 可設定的脈動陣列大小，預設為8x8

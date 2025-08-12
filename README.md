@@ -17,6 +17,17 @@
 ### Memory_data_generator
 
 ### MBIST
+MBIST 測試的部分完全錯誤
+
+Cycle 1:  MBIST_WRITE  → Write(addr0, pattern0)
+Cycle 2:  MBIST_CHECK  → Write(addr1, pattern0) + Read(addr0) & Compare(pattern0)
+Cycle 3:  MBIST_CHECK  → Write(addr2, pattern0) + Read(addr1) & Compare(pattern0)
+...
+Cycle 8:  MBIST_CHECK  → Write(addr7, pattern0) + Read(addr6) & Compare(pattern0)
+Cycle 9:  MBIST_CHECK  → Write(addr0, pattern1) + Read(addr7) & Compare(pattern0)
+...
+
+以此類推直到全部的pattern 都結束，中途比較結果如果有發生錯誤，就會直接停止測試，到FAIL 狀態
 
 ### LBIST
 

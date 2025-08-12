@@ -8,7 +8,7 @@ module bisr_weight_allocation #(
     input wire rst_n,
     
     // eNVM 介面 - 簡化的輸入
-    input wire envm_wr_en,
+    input wire wr_en,  // envm_wr_en_bist_bisr
     input wire [SYSTOLIC_SIZE*SYSTOLIC_SIZE-1:0] envm_faulty_patterns_flat,
     
     // 權重輸入和配置介面
@@ -98,7 +98,7 @@ module bisr_weight_allocation #(
         .rst_n(rst_n),
         
         // eNVM interface - 簡化的輸入
-        .wr_en(envm_wr_en),
+        .wr_en(wr_en),
         .faulty_patterns_flat(envm_faulty_patterns_flat),
         
         // Weight allocation interface
@@ -140,7 +140,7 @@ module bisr_weight_allocation #(
         .faulty_addr(faulty_row_addr),
         .current_row_addr(mapping_addr),
         .all_faulty_matched(all_faulty_matched),
-        .envm_wr_en(envm_wr_en),
+        .wr_en(wr_en),
         
         // Query interface
         .read_addr(read_addr),

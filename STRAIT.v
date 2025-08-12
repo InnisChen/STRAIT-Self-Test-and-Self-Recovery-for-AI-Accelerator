@@ -33,8 +33,8 @@ module STRAIT #(
     // output
     output [SYSTOLIC_SIZE*PARTIAL_SUM_WIDTH-1:0] partial_sum_outputs_flat_outside,
     output test_done,  // 測試完成信號，MBIST , SA , TD 測試完都會拉高1cycle
-    output MBIST_test_result,
-    output LBIST_test_result,
+    output TD_error_flag,
+    output MBIST_FAIL,
 
     output recovery_success,    // 從bisr送出
     output recovery_done        // 從bisr送出
@@ -84,7 +84,7 @@ module STRAIT #(
         // input 
         .clk(clk),
         .rst_n(rst_n),
-        .envm_wr_en(envm_wr_en_bist_bisr),    // 之後改成wr_en
+        .wr_en(envm_wr_en_bist_bisr),
         .envm_faulty_patterns_flat(envm_faulty_patterns_flat_envm_bisr),    // from envm to bisr
         .allocation_start(allocation_start_bist_bisr),                      // 開始權重配置的信號，從bist送
         .input_weights(input_weight_flat),  // from outside
@@ -272,8 +272,8 @@ module STRAIT #(
         
         // 測試結果 - outputs
         .test_done(test_done),  // 測試完成信號，通知 test_bench
-        .MBIST_test_result(MBIST_test_result),
-        .LBIST_test_result(LBIST_test_result)
+        .TD_error_flag(TD_error_flag)
+        .MBIST_FAIL(MBIST_FAIL)
     );
 
 

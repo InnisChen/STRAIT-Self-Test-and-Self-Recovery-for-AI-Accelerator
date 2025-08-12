@@ -14,7 +14,7 @@ module mapping_table #(
     input wire [ADDR_WIDTH-1:0] faulty_addr,      // 錯誤的原始地址 (只在步驟2,3使用)
     input wire [ADDR_WIDTH-1:0] current_row_addr, // 當前處理的row地址 (兩種情況都使用)
     input wire all_faulty_matched,                // 所有錯誤都已匹配完成
-    input wire envm_wr_en,                         // eNVM 寫入信號，用於初始化時機
+    input wire wr_en,                         // eNVM 寫入信號，用於初始化時機
     
     // Query interface (地址轉換)
     input wire [ADDR_WIDTH-1:0] read_addr,
@@ -84,7 +84,7 @@ module mapping_table #(
         end
         else begin
             // 延遲 eNVM 寫入信號
-            envm_wr_en_delayed <= envm_wr_en;
+            envm_wr_en_delayed <= wr_en;
             
             if (envm_wr_en_delayed && !faulty_checker_initialized) begin
                 // 使用延遲信號進行初始化，此時 faulty_rows_mask 已穩定
