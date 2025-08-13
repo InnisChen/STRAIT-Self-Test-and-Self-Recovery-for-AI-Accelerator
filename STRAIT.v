@@ -245,7 +245,7 @@ module STRAIT #(
         .scan_en(scan_en_bist_array),
         
         // 給 BISR 的控制信號 - outputs
-        .envm_wr_en(envm_wr_en_bist_bisr),
+        .envm_wr_en_bist_bisr(envm_wr_en_bist_bisr),
         .allocation_start(allocation_start_bist_bisr),
         .read_addr(read_addr_bist_bisr),
         
