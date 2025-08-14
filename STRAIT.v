@@ -13,7 +13,7 @@ module STRAIT #(
 )(
     // input 
     input clk,
-    input clk_w,
+    // input clk_w,
     input rst_n,
     input START,
     input test_mode,    // 是否在測試模式
@@ -39,7 +39,75 @@ module STRAIT #(
     output recovery_success,    // 從bisr送出
     output recovery_done        // 從bisr送出
 );
-    
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+wire [SYSTOLIC_SIZE*SYSTOLIC_SIZE-1:0] envm_faulty_patterns_flat_envm_bisr;
+wire [WEIGHT_WIDTH-1:0] Scan_data_weight_envm_bist;
+wire [ACTIVATION_WIDTH-1:0] Scan_data_activation_envm_bist;
+wire [PARTIAL_SUM_WIDTH-1:0] Scan_data_partial_sum_in_envm_bist;
+wire [PARTIAL_SUM_WIDTH-1:0] Scan_data_answer_envm_bist;
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+wire [SYSTOLIC_SIZE*WEIGHT_WIDTH-1:0] weights_flat_bisr_buffer;
+wire [SYSTOLIC_SIZE-1:0] pe_disable_in_bisr_buffer;
+wire [ADDR_WIDTH-1:0] output_mapped_addr_bisr_activationmem;
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+wire [SYSTOLIC_SIZE*WEIGHT_WIDTH-1:0] weight_out_flat_buffer_array;
+wire [SYSTOLIC_SIZE*PARTIAL_SUM_WIDTH-1:0] partial_sum_flat_buffer_array;
+wire [SYSTOLIC_SIZE-1:0] pe_disable_buffer_array;
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+wire [PARTIAL_SUM_WIDTH*SYSTOLIC_SIZE-1:0] partial_sum_flat_array_accumulator;
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+wire [SYSTOLIC_SIZE*PARTIAL_SUM_WIDTH-1:0] partial_sum_outputs_flat;
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+wire [SYSTOLIC_SIZE*ACTIVATION_WIDTH-1:0] activation_flat_activationmem_buffer;
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+wire [SYSTOLIC_SIZE*ACTIVATION_WIDTH-1:0] activation_data_flat_buffer_array;
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+wire test_type;
+wire [MAX_PATTERN_ADDR_WIDTH-1:0] test_counter_bist_envm;
+wire TD_answer_choose_bist_envm;
+wire detection_en_bist_envm;
+wire [ADDR_WIDTH-1:0] detection_addr_bist_envm;
+wire clk_w;
+wire scan_en_bist_array;
+wire envm_wr_en_bist_bisr;
+wire allocation_start_bist_bisr;
+wire [ADDR_WIDTH-1:0] read_addr_bist_bisr;
+wire [SYSTOLIC_SIZE*WEIGHT_WIDTH-1:0] weight_in_test_flat_bist_buffer;
+wire [SYSTOLIC_SIZE*PARTIAL_SUM_WIDTH-1:0] partial_sum_test_flat_bist_buffer;
+wire [SYSTOLIC_SIZE*ACTIVATION_WIDTH-1:0] activation_in_test_flat_bist_buffer;
+wire start_en_bist_dlc;
+wire [SYSTOLIC_SIZE-1:0] compared_results_bist_dlc;
+wire wr_en_bist_accumulator;
+wire [ADDR_WIDTH-1:0] wr_addr_bist_accumulator;
+wire [PARTIAL_SUM_WIDTH*SYSTOLIC_SIZE-1:0] partial_sum_flat_bist_accumulator;
+wire [ADDR_WIDTH-1:0] rd_addr_bist_accumulator;
+wire wr_en_bist_activationmem;
+wire [ADDR_WIDTH-1:0] wr_addr_bist_activationmem;
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+wire [SYSTOLIC_SIZE-1:0] single_pe_detection_dlc_envm;
+wire [SYSTOLIC_SIZE-1:0] column_fault_detection_dlc_envm;
+wire [SYSTOLIC_SIZE-1:0] row_fault_detection_dlc_envm;
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
     // eNVM 
     eNVM #(
@@ -93,6 +161,7 @@ module STRAIT #(
 
         // output
         .output_weights_flat(weights_flat_bisr_buffer),   // from bisr to systolic array
+        .pe_disable_out(pe_disable_in_bisr_buffer),
         .output_mapped_addr(output_mapped_addr_bisr_activationmem),  //from bisr to activation_mem
         .recovery_success(recovery_success),    // 送到外部
         .recovery_done(recovery_done)           // 送到外部
@@ -242,6 +311,7 @@ module STRAIT #(
         .detection_addr(detection_addr_bist_envm),
         
         // 控制 Systolic Array 的信號 - outputs
+        .clk_w(clk_w),
         .scan_en(scan_en_bist_array),
         
         // 給 BISR 的控制信號 - outputs
@@ -272,7 +342,7 @@ module STRAIT #(
         
         // 測試結果 - outputs
         .test_done(test_done),  // 測試完成信號，通知 test_bench
-        .TD_error_flag(TD_error_flag)
+        .TD_error_flag(TD_error_flag),
         .MBIST_FAIL(MBIST_FAIL)
     );
 

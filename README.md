@@ -44,9 +44,7 @@ STRAIT是一個針對AI加速器的完整自測試、自診斷和自修復系統
 - **功能**: 混合式內建自測試控制器
 - **支援測試類型**:
   - **MBIST**: 記憶體測試(March算法)
-  - **LBIST**: 邏輯測試(SA/TD故障)
-
-修改前問題：SA_CHECK狀態作用不明確，比較和shift混在一起  
+  - **LBIST**: 邏輯測試(SA/TD故障)  
   
 修改後流程：  
 Pattern 0:  SA_SHIFT(8 cycles, 無比較) → SA_CAPTURE(1 cycle)  
@@ -55,8 +53,6 @@ Pattern 2:  SA_SHIFT(8 cycles, P1 shift out + 比較) → SA_CAPTURE(1 cycle)
 ...  
 Pattern 11: SA_SHIFT(8 cycles, P10 shift out + 比較) → SA_CAPTURE(1 cycle)  
 最後階段:   SA_FINAL_SHIFT(8 cycles, P11 shift out + 比較) → TD_SHIFT  
-
-
 
 - **主要特性**:
   - 多階段測試流程
