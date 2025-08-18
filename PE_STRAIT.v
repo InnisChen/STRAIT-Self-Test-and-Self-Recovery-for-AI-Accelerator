@@ -7,9 +7,9 @@ module STRAIT_PE #(
 )(
     input clk , rst_n,
     input clk_w,
-    input [WEIGHT_WIDTH-1:0] weight,
-    input [ACTIVATION_WIDTH-1:0] activation,
-    input [PARTIAL_SUM_WIDTH-1:0] partial_sum_in,
+    input [WEIGHT_WIDTH-1:0] weight,                //
+    input [ACTIVATION_WIDTH-1:0] activation,        //
+    input [PARTIAL_SUM_WIDTH-1:0] partial_sum_in,   //
     input PE_disable, scan_en,
     output reg [WEIGHT_WIDTH-1:0] weight_out, 
     output reg [ACTIVATION_WIDTH-1:0] activation_out,
@@ -26,9 +26,9 @@ module STRAIT_PE #(
         .ACTIVATION_WIDTH(ACTIVATION_WIDTH),
         .PARTIAL_SUM_WIDTH(PARTIAL_SUM_WIDTH)
     ) MAC_u1(
-        .activation(activation),
-        .weight(weight),
-        .partial_sum(partial_sum_in),
+        .weight(weight_out),                //
+        .activation(activation_out),        //                    
+        .partial_sum(partial_sum_in),   //    
         .result(MAC_result)
     );
 
@@ -66,8 +66,8 @@ module MAC #(
     parameter ACTIVATION_WIDTH = 8,
     parameter PARTIAL_SUM_WIDTH = WEIGHT_WIDTH + ACTIVATION_WIDTH + $clog2(SYSTOLIC_SIZE)
 )(
-    input [ACTIVATION_WIDTH-1:0] activation,
     input [WEIGHT_WIDTH-1:0] weight,
+    input [ACTIVATION_WIDTH-1:0] activation,
     input [PARTIAL_SUM_WIDTH-1:0] partial_sum,
     output [PARTIAL_SUM_WIDTH-1:0] result
 );

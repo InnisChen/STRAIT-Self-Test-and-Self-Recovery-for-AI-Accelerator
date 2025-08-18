@@ -35,7 +35,6 @@ module Activation_buffer #(
         end
     endgenerate
 
-
     // Row 1 到 Row (SYSTOLIC_SIZE-1): 每行宣告所需數量的registers
     integer j;
     generate
@@ -61,6 +60,8 @@ module Activation_buffer #(
                     end
                 end
             end
+
+            assign activation_out[i] = test_mode ? activation_in_test[i] : shift_regs[i-1];
         end
     endgenerate
 
@@ -68,13 +69,13 @@ module Activation_buffer #(
     // Row 0
     assign activation_out[0] = test_mode ? activation_in_test[0] : activation_in_activationmem[0];
 
-    // Row 1 to Row (SYSTOLIC_SIZE-1)
-    generate
-        for (i = 1; i < SYSTOLIC_SIZE; i = i + 1) begin : activation_out_gen
-            // 輸出選擇：根據test_mode決定
-            assign activation_out[i] = test_mode ? activation_in_test[i] : shift_regs[i-1];
-        end
-    endgenerate
+    // // Row 1 to Row (SYSTOLIC_SIZE-1)
+    // generate
+    //     for (i = 1; i < SYSTOLIC_SIZE; i = i + 1) begin : activation_out_gen
+    //         // 輸出選擇：根據test_mode決定
+    //         assign activation_out[i] = test_mode ? activation_in_test[i] : shift_regs[i-1];
+    //     end
+    // endgenerate
 
 endmodule
 

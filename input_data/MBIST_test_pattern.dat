@@ -3,10 +3,10 @@
 // Format: 19-bit binary data (PARTIAL_SUM_WIDTH)
 // 8 patterns for different memory fault types
 
-// Pattern 0: All zeros (Background pattern)
+// Pattern 0: All zeros (Background pattern)   原000
 0000000000000000000
 
-// Pattern 1: All ones (Inverted background)
+// Pattern 1: All ones (Inverted background)   原111
 1111111111111111111
 
 // Pattern 2: Alternating 01010... (Coupling faults detection)

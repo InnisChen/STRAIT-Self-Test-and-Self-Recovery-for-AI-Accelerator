@@ -18,8 +18,8 @@ module eNVM #(
     input detection_en,     // 診斷結果送到envm儲存訊號
     input [ADDR_WIDTH-1:0] detection_addr,
     input [SYSTOLIC_SIZE-1:0] single_pe_detection,
-    input column_fault_detection,   //每次1bit 傳n次
-    input row_fault_detection,      //...
+    input [SYSTOLIC_SIZE-1:0] column_fault_detection,   //一次傳全部
+    input [SYSTOLIC_SIZE-1:0] row_fault_detection,      //...
     
     output [SYSTOLIC_SIZE*SYSTOLIC_SIZE-1:0] envm_faulty_patterns_flat,
     output [WEIGHT_WIDTH-1:0] Scan_data_weight,
@@ -57,8 +57,11 @@ module eNVM #(
 
     always @(posedge clk ) begin
         if(detection_en) begin
-            faulty_row_storage[detection_addr] <= row_fault_detection;
-            faulty_column_storage[detection_addr] <= column_fault_detection;
+            faulty_row_storage <= row_fault_detection;
+            faulty_column_storage <= column_fault_detection;
+            // faulty_row_storage[detection_addr] <= row_fault_detection;
+            // faulty_column_storage[detection_addr] <= column_fault_detection;
+
             faulty_pe_storage[detection_addr] <= single_pe_detection;
         end
         else;

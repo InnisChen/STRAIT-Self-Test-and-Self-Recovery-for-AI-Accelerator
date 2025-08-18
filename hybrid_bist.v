@@ -11,8 +11,8 @@
 // MBIST 流程說明：
 // - Pipeline 式 March 算法：同時進行寫入和讀取比較
 // - MBIST_WRITE: 第一個 cycle，純寫入 pattern0 到 addr0
-// - MBIST_READ: 準備讀取階段（1 cycle 過渡）
-// - MBIST_CHECK: 並行讀寫比較，任何錯誤立即進入 FAIL 狀態
+// - MBIST_CHECK: 準備讀取階段（1 cycle 過渡）
+// - MBIST_FINAL_READ: 並行讀寫比較，任何錯誤立即進入 FAIL 狀態
 
 module hybrid_bist #(
     parameter SYSTOLIC_SIZE = 8,
@@ -73,7 +73,7 @@ module hybrid_bist #(
     // Accumulator 控制信號 (MBIST + LBIST 共用) - outputs
     output acc_wr_en,                                       // Accumulator 寫使能  
     output reg [ADDR_WIDTH-1:0] acc_wr_addr,                // Accumulator 寫地址
-    output reg [PARTIAL_SUM_WIDTH*SYSTOLIC_SIZE-1:0] acc_wr_data, // Accumulator 寫資料
+    output [PARTIAL_SUM_WIDTH*SYSTOLIC_SIZE-1:0] acc_wr_data, // Accumulator 寫資料
     output reg [ADDR_WIDTH-1:0] acc_rd_addr,                // Accumulator 讀地址
     
     // Activation_mem 控制信號 - outputs
@@ -113,22 +113,28 @@ module hybrid_bist #(
     
     parameter   IDLE                = 5'b00000,
                 MBIST_START         = 5'b00001,
-                MBIST_WRITE         = 5'b00010,
+                MBIST_WRITE         = 5'b00010,  // 原 MBIST_WRITE 
                 MBIST_READ          = 5'b00011,
-                MBIST_CHECK         = 5'b00100,
-                LBIST_START         = 5'b00101,
-                SA_SHIFT            = 5'b00110,  // SA pattern shift in + previous result shift out
-                SA_CAPTURE          = 5'b00111,  // SA MAC operation
-                SA_FINAL_SHIFT      = 5'b01000,  // SA final result shift out
-                TD_SHIFT            = 5'b01001,
-                TD_LAUNCH           = 5'b01010,  // 1 cycle
-                TD_CAPTURE          = 5'b01011,  // 1 cycle
-                TD_FINAL_SHIFT      = 5'b01100,         // TD_SHIFT_OUT 改為 TD_FINAL_SHIFT 
-                TEST_COMPLETE       = 5'b01101,
-                FAIL                = 5'b01110,
-                WEIGHT_ALLOCATION   = 5'b01111,  // 權重配置階段
-                WEIGHT_LOAD         = 5'b10000,  // 權重載入階段  
-                NORMAL_OPERATION    = 5'b10001;  // 正常運算階段
+                MBIST_CHECK         = 5'b00100,  // 原 MBIST_CHECK
+                MBIST_FINAL_READ    = 5'b00101,  // 原 MBIST_FINAL_READ
+                MBIST_FINAL_CHECK   = 5'b00110,
+
+                LBIST_START         = 5'b00111,
+
+                SA_SHIFT            = 5'b01000,  // SA pattern shift in + previous result shift out
+                SA_CAPTURE          = 5'b01001,  // SA MAC operation
+                SA_FINAL_SHIFT      = 5'b01010,  // SA final result shift out
+
+                TD_SHIFT            = 5'b01011,
+                TD_LAUNCH           = 5'b01100,  // 1 cycle
+                TD_CAPTURE          = 5'b01101,  // 1 cycle
+                TD_FINAL_SHIFT      = 5'b01110,  // TD_SHIFT_OUT 改為 TD_FINAL_SHIFT 
+
+                TEST_COMPLETE       = 5'b01111,
+                FAIL                = 5'b10000,
+                WEIGHT_ALLOCATION   = 5'B10001,  // 權重配置階段
+                WEIGHT_LOAD         = 5'b10010,  // 權重載入階段
+                NORMAL_OPERATION    = 5'b10011;  // 正常運算階段
     
     reg [4:0] current_state, next_state;
     
@@ -163,27 +169,36 @@ module hybrid_bist #(
             
             MBIST_WRITE: begin
                 // 第一個 cycle：純寫入 pattern0 到 addr0
-                // 後續由 MBIST_CHECK 處理並行讀寫比較
-                if (memory_addr == SYSTOLIC_SIZE-1 && pattern_counter == MBIST_PATTERN_DEPTH-1) begin
-                    next_state = MBIST_READ;
-                end
+                next_state = MBIST_READ;
             end
-            
+
             MBIST_READ: begin
-                // 準備讀取階段（1 cycle 過渡）
                 next_state = MBIST_CHECK;
             end
             
             MBIST_CHECK: begin
-                // 並行讀寫比較：
-                // 寫入當前位置，同時讀取並比較前一個位置
+                if(|compared_results) begin
+                    next_state = FAIL;
+                end
+                else if(acc_wr_addr == SYSTOLIC_SIZE-1 && pattern_counter == MBIST_PATTERN_DEPTH-1) begin
+                    next_state = MBIST_FINAL_READ;
+                end
+                else begin
+                    next_state = MBIST_CHECK;
+                end
+            end
+            
+            MBIST_FINAL_READ: begin
                 if (|compared_results) begin  // 任何錯誤立即失敗
                     next_state = FAIL;
-                end else if (memory_addr == SYSTOLIC_SIZE-1 && pattern_counter == MBIST_PATTERN_DEPTH-1) begin
-                    next_state = TEST_COMPLETE;  // 所有測試完成
-                end else begin
-                    next_state = MBIST_READ;  // 繼續下個地址/pattern
                 end
+                else begin
+                    next_state = MBIST_FINAL_CHECK;
+                end
+            end
+
+            MBIST_FINAL_CHECK: begin
+                next_state = TEST_COMPLETE;
             end
             
             // LBIST 狀態
@@ -207,7 +222,8 @@ module hybrid_bist #(
             
             SA_FINAL_SHIFT: begin
                 if (shift_counter == 3'd7) begin  // 8 cycles完成
-                    next_state = TD_SHIFT;        // 進入TD測試
+                    // next_state = TD_SHIFT;        // 進入TD測試
+                    next_state = TEST_COMPLETE;
                 end
             end
             
@@ -296,36 +312,51 @@ module hybrid_bist #(
             case (current_state)
                 MBIST_START: begin
                     pattern_counter <= {MAX_PATTERN_ADDR_WIDTH{1'b0}};
-                    memory_addr <= {ADDR_WIDTH{1'b0}};
+                    // memory_addr <= {ADDR_WIDTH{1'b0}};
                 end
                 
                 MBIST_WRITE: begin
-                    // Pipeline 式寫入：每個 cycle 寫入一個位置
-                    if (memory_addr == SYSTOLIC_SIZE-1) begin
-                        memory_addr <= {ADDR_WIDTH{1'b0}};
-                        if (pattern_counter == MBIST_PATTERN_DEPTH-1) begin
-                            pattern_counter <= {MAX_PATTERN_ADDR_WIDTH{1'b0}};
-                        end else begin
-                            pattern_counter <= pattern_counter + 1;
-                        end
-                    end else begin
-                        memory_addr <= memory_addr + 1;
-                    end
+                    // // Pipeline 式寫入：每個 cycle 寫入一個位置
+                    // if (memory_addr == SYSTOLIC_SIZE-1) begin
+                    //     memory_addr <= {ADDR_WIDTH{1'b0}};
+                    //     if (pattern_counter == MBIST_PATTERN_DEPTH-1) begin
+                    //         pattern_counter <= {MAX_PATTERN_ADDR_WIDTH{1'b0}};
+                    //     end else begin
+                    //         pattern_counter <= pattern_counter + 1;
+                    //     end
+                    // end else begin
+                    //     memory_addr <= memory_addr + 1;
+                    // end
                 end
-                
+
+                MBIST_READ: begin
+
+                end
+
                 MBIST_CHECK: begin
-                    // Pipeline 式比較：寫入當前位置，比較前一個位置
-                    if (~(|compared_results)) begin  // 當前測試通過才繼續
-                        if (memory_addr == SYSTOLIC_SIZE-1) begin
-                            memory_addr <= {ADDR_WIDTH{1'b0}};
-                            if (pattern_counter != MBIST_PATTERN_DEPTH-1) begin
-                                pattern_counter <= pattern_counter + 1;
-                            end
-                        end else begin
-                            memory_addr <= memory_addr + 1;
-                        end
+                    if(acc_wr_addr == SYSTOLIC_SIZE-1) begin
+                        pattern_counter <= pattern_counter + 1;
                     end
-                    // 如果有錯誤，停止計數器更新，保持在錯誤狀態
+                    else;
+                end
+                     
+                MBIST_FINAL_READ: begin
+                    // // Pipeline 式比較：寫入當前位置，比較前一個位置
+                    // if (~(|compared_results)) begin  // 當前測試通過才繼續
+                    //     if (memory_addr == SYSTOLIC_SIZE-1) begin
+                    //         memory_addr <= {ADDR_WIDTH{1'b0}};
+                    //         if (pattern_counter != MBIST_PATTERN_DEPTH-1) begin
+                    //             pattern_counter <= pattern_counter + 1;
+                    //         end
+                    //     end else begin
+                    //         memory_addr <= memory_addr + 1;
+                    //     end
+                    // end
+                    // // 如果有錯誤，停止計數器更新，保持在錯誤狀態
+                end
+
+                MBIST_FINAL_CHECK: begin
+
                 end
                 
                 LBIST_START: begin
@@ -340,7 +371,8 @@ module hybrid_bist #(
                 SA_SHIFT: begin
                     if (shift_counter < 3'd7) begin
                         shift_counter <= shift_counter + 1;
-                    end else begin
+                    end 
+                    else begin
                         shift_counter <= 3'b000;  // 重置準備capture
                     end
                 end
@@ -452,7 +484,7 @@ module hybrid_bist #(
         else;
     end
     
-    // 測試向量產生 - 維持原有邏輯
+    // 測試向量產生
     integer i;
     always @(*) begin
         // 預設值：所有輸出為 0
@@ -460,13 +492,13 @@ module hybrid_bist #(
         activation_in_test_flat = {SYSTOLIC_SIZE*ACTIVATION_WIDTH{1'b0}};
         partial_sum_test_flat = {SYSTOLIC_SIZE*PARTIAL_SUM_WIDTH{1'b0}};
         
-        if (current_state == SA_SHIFT) begin
+        if (next_state == SA_SHIFT || next_state == SA_CAPTURE) begin   //沒有加capture會導致沒有partial_sum_in值，可以考慮設置成reg
             // SA 測試：所有 PE 使用相同資料
             weight_in_test_flat = {SYSTOLIC_SIZE{envm_weight}};
             activation_in_test_flat = {SYSTOLIC_SIZE{envm_activation}};
             partial_sum_test_flat = {SYSTOLIC_SIZE{envm_partial_sum_in}};
         end
-        else if (current_state == TD_SHIFT) begin
+        else if (next_state == TD_SHIFT) begin
             // TD 測試：根據 td_pe_select 選擇性分佈資料
             case (td_pe_select)
                 2'b00: begin  // 測試左上 PE (0,0)
@@ -519,14 +551,73 @@ module hybrid_bist #(
             endcase
         end
     end
+
+    assign acc_wr_data = {SYSTOLIC_SIZE{mbist_data}};
+
+    // MBIST acc訊號控制
+    always @(posedge clk or negedge rst_n) begin
+        if(!rst_n) begin
+            acc_wr_addr <= {ADDR_WIDTH{1'b0}};
+            acc_rd_addr <= {ADDR_WIDTH{1'b0}};
+            // acc_wr_data <= {SYSTOLIC_SIZE{PARTIAL_SUM_WIDTH{1'b0}}};
+        end 
+        else begin
+            case (current_state)
+                MBIST_START: begin
+                    acc_wr_addr <= {ADDR_WIDTH{1'b0}};
+                    // acc_wr_data <= {SYSTOLIC_SIZE{mbist_data}};
+                end
+                
+                MBIST_WRITE: begin
+                    acc_wr_addr <= acc_wr_addr + 1;
+                    acc_rd_addr <= {ADDR_WIDTH{1'b0}};
+                    // acc_wr_data <= {SYSTOLIC_SIZE{mbist_data}};
+                end
+                
+                MBIST_READ: begin
+                    acc_wr_addr <= acc_wr_addr + 1;
+                    acc_rd_addr <= acc_wr_addr;
+                    // acc_wr_data <= {SYSTOLIC_SIZE{mbist_data}};
+                end
+                
+                MBIST_CHECK: begin
+                    if(acc_wr_addr == SYSTOLIC_SIZE-1) begin
+                        acc_wr_addr <= {ADDR_WIDTH{1'b0}};
+                    end
+                    else begin
+                        acc_wr_addr <= acc_wr_addr + 1;
+                    end
+                    acc_rd_addr <= acc_wr_addr;
+                    // acc_wr_data <= {SYSTOLIC_SIZE{mbist_data}};
+                end
+                
+                // MBIST_FINAL_READ: begin
+                //     // acc_wr_addr <= acc_wr_addr + 1;      wr_en 此時要關掉了
+                //     // acc_rd_addr <= acc_wr_addr;    後面不用再讀了
+                //     // acc_wr_data <= {SYSTOLIC_SIZE{mbist_data}};
+                // end
+                
+                // MBIST_FINAL_CHECK: begin
+
+                // end
+
+                LBIST_START: begin
+                    acc_wr_addr <= {ADDR_WIDTH{1'b0}};
+                    acc_rd_addr <= {ADDR_WIDTH{1'b0}};
+                end
+
+                default: ;
+            endcase
+        end
+    end
     
     always @(*) begin
         // 預設值
         test_counter = pattern_counter;
         td_pe_select = td_pe_counter;
-        acc_wr_addr = memory_addr;
-        acc_rd_addr = memory_addr;
-        acc_wr_data = {SYSTOLIC_SIZE{mbist_data}};
+        // acc_wr_addr = memory_addr;
+        // acc_rd_addr = memory_addr;
+        // acc_wr_data = {SYSTOLIC_SIZE{mbist_data}};
         
         // BISR 控制信號預設值
         read_addr = normal_addr_counter;  // 預設使用正常地址
@@ -536,30 +627,38 @@ module hybrid_bist #(
         activation_mem_wr_addr = normal_addr_counter;
         
         case (current_state)
+
+            // MBIST_WRITE: begin
+            //     // 準備寫入地址
+            //     acc_wr_addr = memory_addr;
+            // end
             
-            MBIST_READ: begin
-                // 準備讀取地址
-                acc_rd_addr = memory_addr;
-            end
+            // MBIST_READ: begin
+            // end
             
-            MBIST_CHECK: begin         
-                // 準備下個讀取地址（除非測試完成或失敗）
-                if (~(|compared_results) && 
-                   !(memory_addr == SYSTOLIC_SIZE-1 && pattern_counter == MBIST_PATTERN_DEPTH-1)) begin
-                    if (memory_addr == SYSTOLIC_SIZE-1) begin
-                        acc_rd_addr = {ADDR_WIDTH{1'b0}};
-                    end else begin
-                        acc_rd_addr = memory_addr + 1;
-                    end
-                end
-            end
+            // MBIST_CHECK: begin
+            //     // 準備讀取地址
+            //     acc_rd_addr = memory_addr;
+            // end
             
-            SA_CAPTURE: begin
-                acc_rd_addr = {ADDR_WIDTH{1'b0}};
-            end
+            // MBIST_FINAL_READ: begin         
+            //     // 準備下個讀取地址（除非測試完成或失敗）
+            //     if (~(|compared_results) && 
+            //        !(memory_addr == SYSTOLIC_SIZE-1 && pattern_counter == MBIST_PATTERN_DEPTH-1)) begin
+            //         if (memory_addr == SYSTOLIC_SIZE-1) begin
+            //             acc_rd_addr = {ADDR_WIDTH{1'b0}};
+            //         end else begin
+            //             acc_rd_addr = memory_addr + 1;
+            //         end
+            //     end
+            // end
+            
+            // SA_CAPTURE: begin
+            //     acc_rd_addr = {ADDR_WIDTH{1'b0}};
+            // end
 
             TD_FINAL_SHIFT: begin
-                acc_rd_addr = {ADDR_WIDTH{1'b0}};  // 固定讀取第一個位置
+                // acc_rd_addr = {ADDR_WIDTH{1'b0}};  // 固定讀取第一個位置
                 
                 // Pipeline 控制：從 cycle 3 開始準備下一個 pattern
                 if (next_pattern_loading) begin
@@ -619,10 +718,32 @@ module hybrid_bist #(
                 MBIST_WRITE: begin
                     expected_data_reg <= mbist_data;
                 end
+
+                // 相同
+                // MBIST_READ: begin
+                //     expected_data_reg <= mbist_data;
+                // end
+                
+                MBIST_CHECK: begin
+                    expected_data_reg <= mbist_data;
+                end
+                
+                // MBIST_FINAL_READ: begin
+                //     expected_data_reg <= mbist_data;
+                // end
+                
+                // MBIST_FINAL_CHECK: begin
+                //     expected_data_reg <= mbist_data;
+                // end
+
                 
                 SA_SHIFT: begin
-                    expected_data_reg <= envm_answer;
+                    if (shift_counter == 3'd7) begin    //確保前面的比對完成才放新的比較正確答案進來
+                        expected_data_reg <= envm_answer;
+                    end
+                    else ;
                 end
+
                 
                 TD_SHIFT: begin
                     if (shift_counter == 3'd0 && td_pe_counter == 2'b00) begin  // 每一組pattern送第一次的時候就存期望結果
@@ -681,10 +802,10 @@ module hybrid_bist #(
     assign test_type = (current_state == TD_SHIFT) || (current_state == TD_LAUNCH) || (current_state == TD_CAPTURE)|| (current_state == TD_FINAL_SHIFT);
     
     // DLC控制：除了第一個pattern外，SA_SHIFT和SA_FINAL_SHIFT時啟動
-    assign diagnosis_start_en = ((current_state == SA_SHIFT) && (pattern_counter != 0)) || (current_state == SA_FINAL_SHIFT);
+    assign diagnosis_start_en = ((next_state == SA_SHIFT) && (pattern_counter != 0)) || (next_state == SA_FINAL_SHIFT);
     
     // 掃描模式訊號
-    assign scan_en = (current_state == SA_SHIFT) || (current_state == SA_FINAL_SHIFT) || (current_state == TD_SHIFT) || (current_state == TD_FINAL_SHIFT);
+    assign scan_en = (next_state == SA_SHIFT) || (next_state == SA_FINAL_SHIFT) || (next_state == TD_SHIFT) || (next_state == TD_FINAL_SHIFT);
 
     // detection_en 只有在SA的最後一個pattenr時觸發為1，目的是讓SA的錯誤資訊從DLC電路傳到eNVM
     assign detection_en = (current_state == SA_FINAL_SHIFT);
@@ -700,7 +821,14 @@ module hybrid_bist #(
     assign allocation_start = (current_state == WEIGHT_ALLOCATION);
 
     // accumulator 寫入訊號
-    assign acc_wr_en = (current_state == MBIST_WRITE) || (current_state == MBIST_CHECK);    // 第一個 cycle：純寫入，後續 cycles 由 MBIST_CHECK 處理
+    // 加上next_state == MBIST_WRITE ?
+    assign acc_wr_en = (current_state == MBIST_START) || 
+    (current_state == MBIST_WRITE) ||
+    (current_state == MBIST_READ) || 
+    (current_state == MBIST_CHECK) || 
+    (current_state == SA_SHIFT) || 
+    (current_state == SA_CAPTURE) || 
+    (current_state == SA_FINAL_SHIFT);
 
     // 測試結束訊號
     assign test_done = (current_state == TEST_COMPLETE) || (current_state == FAIL);

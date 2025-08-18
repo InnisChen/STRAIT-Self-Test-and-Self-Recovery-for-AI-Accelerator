@@ -14,14 +14,11 @@ module Diagnostic_loop_chains #(
     // output reg [ADDR_WIDTH-1:0] counter //輸出給envm讀取第幾個row的錯誤資訊，因envm 沒有rst沒辦法rst counter 訊號
     // 改由bist送addr
 );
-    //看cycle修正要輸出哪一列的PE(or gate後面 或 第一個reg後)
-    assign single_pe_detection = col_0;
-
     // 動態宣告線路和暫存器
     wire [SYSTOLIC_SIZE-1:0] col_0;  // 每個column的第0級輸出
     reg [SYSTOLIC_SIZE-1:0] col_reg [0:SYSTOLIC_SIZE-1];  // 二維陣列儲存所有暫存器
 
-    // 產生各個column的第0級信號 (輸入信號 OR 最後一級的回饋)
+    // 產生各個column的第0級信號 (輸入信號 or 最後一級的回饋)
     genvar i;
     generate
         for (i = 0; i < SYSTOLIC_SIZE; i = i + 1) begin : col_input_gen
@@ -42,7 +39,9 @@ module Diagnostic_loop_chains #(
                 end
                 else if(start_en) begin
                     // 建立移位暫存器鏈
-                    col_reg[0][i] <= col_0[i];
+                    // col_reg[0][i] <= col_0[i];
+                    col_reg[0][i] <= col_inputs[i] || col_reg[SYSTOLIC_SIZE-1][i];
+                    
                     for (k = 1; k < SYSTOLIC_SIZE; k = k + 1) begin
                         col_reg[k][i] <= col_reg[k-1][i];
                     end
@@ -81,7 +80,6 @@ module Diagnostic_loop_chains #(
 
 
     //----------------------- Column fault detector -----------------------
-    wire row_and_result;
     wire [SYSTOLIC_SIZE-1:0] col_and_result;
     reg [SYSTOLIC_SIZE-1:0] column_detect;
 
@@ -125,5 +123,9 @@ module Diagnostic_loop_chains #(
     // 輸出信號連接
     assign column_fault_detection = column_detect;
     assign row_fault_detection = row_detect_reg;
+
+
+    //看cycle修正要輸出哪一列的PE(or gate後面 或 第一個reg後)
+    assign single_pe_detection = col_0;
 
 endmodule

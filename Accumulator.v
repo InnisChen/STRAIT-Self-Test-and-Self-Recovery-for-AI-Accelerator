@@ -16,7 +16,7 @@ module Accumulator #(
     input wr_en,
     input [ADDR_WIDTH-1:0] wr_addr,  // 寫入地址
     input [PARTIAL_SUM_WIDTH*SYSTOLIC_SIZE-1:0] partial_sum_inputs_array_flat,  // 輸入部分和，從systolic array來的
-    input [PARTIAL_SUM_WIDTH-1:0] partial_sum_inputs_test_flat, // 測試模式下的輸入部分和
+    input [PARTIAL_SUM_WIDTH*SYSTOLIC_SIZE-1:0] partial_sum_inputs_test_flat, // 測試模式下的輸入部分和
     input [ADDR_WIDTH-1:0] rd_addr_bist,  // 讀取地址
     input [ADDR_WIDTH-1:0] rd_addr_outside,  // 測試時用bist給讀取地址
     output [PARTIAL_SUM_WIDTH*SYSTOLIC_SIZE-1:0] partial_sum_outputs_flat  // 輸出部分和
@@ -25,10 +25,10 @@ module Accumulator #(
     // MBIST測試下，accumulator的輸入部分和從bist送入
     // test_mode為1，且BIST_mode為0(MBIST) 才使用BIST來的資料
     wire [PARTIAL_SUM_WIDTH*SYSTOLIC_SIZE-1:0] partial_sum_inputs_flat;
-    assign partial_sum_inputs_flat = (test_mode && ~BIST_mode) ? {SYSTOLIC_SIZE{partial_sum_inputs_test_flat}} : partial_sum_inputs_array_flat;
+    assign partial_sum_inputs_flat = (test_mode && ~BIST_mode) ? partial_sum_inputs_test_flat : partial_sum_inputs_array_flat;
 
     // 讀取地址選擇
-    reg [ADDR_WIDTH-1:0] rd_addr;
+    wire [ADDR_WIDTH-1:0] rd_addr;
     assign rd_addr = test_mode ? rd_addr_bist : rd_addr_outside; // 根據test_mode選擇讀取地址
 
     reg [ADDR_WIDTH:0] wr_addr_en_reg [0:SYSTOLIC_SIZE-2];  //wr_addr , wr_en 合併訊號
