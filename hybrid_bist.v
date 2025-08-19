@@ -50,7 +50,7 @@ module hybrid_bist #(
     output test_type,                                       // 0: SA, 1: TD
     output reg [MAX_PATTERN_ADDR_WIDTH-1:0] pattern_counter,   // eNVM pattern 索引
     output TD_answer_choose,                                // TD測試答案選擇 (0: launch, 1: capture)
-    output detection_en,                                    // 告知 eNVM 可以開始讀取診斷資料
+    output reg detection_en,                                    // 告知 eNVM 可以開始讀取診斷資料
     output reg [ADDR_WIDTH-1:0] detection_addr,             // 診斷地址
     
     // 控制 Systolic Array 的信號
@@ -212,7 +212,7 @@ module hybrid_bist #(
             SA_SHIFT: begin
                 if (shift_counter == 3'd7) begin  // 8 cycles完成
                     // next_state = SA_CAPTURE;
-                    if (pattern_counter == SA_TEST_PATTERN_DEPTH-1) begin
+                    if (pattern_counter == SA_TEST_PATTERN_DEPTH) begin
                         next_state = SA_FINAL_SHIFT;  // 最後一個pattern，進入最後shift
                     end
                 end
@@ -228,8 +228,8 @@ module hybrid_bist #(
             
             SA_FINAL_SHIFT: begin
                 if (shift_counter == 3'd7) begin  // 8 cycles完成
-                    // next_state = TD_SHIFT;        // 進入TD測試
-                    next_state = TEST_COMPLETE;
+                    next_state = TD_SHIFT;        // 進入TD測試
+                    // next_state = TEST_COMPLETE;
                 end
             end
             
@@ -298,7 +298,7 @@ module hybrid_bist #(
             pattern_counter <= {MAX_PATTERN_ADDR_WIDTH{1'b0}};
             memory_addr <= {ADDR_WIDTH{1'b0}};
             td_pe_counter <= 2'b00;
-            detection_addr <= {ADDR_WIDTH{1'b0}};
+            // detection_addr <= {ADDR_WIDTH{1'b0}};
             normal_addr_counter <= {ADDR_WIDTH{1'b0}};
             weight_allocation_counter <= 3'b000;
             weight_load_counter <= 3'b000;
@@ -307,7 +307,7 @@ module hybrid_bist #(
             pattern_counter <= {MAX_PATTERN_ADDR_WIDTH{1'b0}};
             memory_addr <= {ADDR_WIDTH{1'b0}};
             td_pe_counter <= 2'b00;
-            detection_addr <= {ADDR_WIDTH{1'b0}};
+            // detection_addr <= {ADDR_WIDTH{1'b0}};
             shift_counter <= 3'b000;
             shift_out_counter <= 3'b000;
             next_pattern_loading <= 1'b0;
@@ -368,7 +368,7 @@ module hybrid_bist #(
                 LBIST_START: begin
                     pattern_counter <= {MAX_PATTERN_ADDR_WIDTH{1'b0}};
                     td_pe_counter <= 2'b00;
-                    detection_addr <= SYSTOLIC_SIZE - 1;  // 初始化為最大值（最後一個 ROW）
+                    // detection_addr <= SYSTOLIC_SIZE - 1;  // 初始化為最大值（最後一個 ROW）
                     shift_counter <= 3'b000;
                     shift_out_counter <= 3'b000;
                     next_pattern_loading <= 1'b0;
@@ -382,8 +382,13 @@ module hybrid_bist #(
                         shift_counter <= shift_counter + 1;
                     end
 
-                    if(shift_counter == 3'd6) begin //6 下一組pattern 資料才來的及取用送給array
-                        pattern_counter <= pattern_counter + 1;
+                    if(shift_counter == 3'd6) begin     //6 下一組pattern 資料才來的及取用送給array     
+                        // if(pattern_counter == SA_TEST_PATTERN_DEPTH-1) begin
+                        //     pattern_counter <= {MAX_PATTERN_ADDR_WIDTH{1'b0}};
+                        // end
+                        // else begin
+                            pattern_counter <= pattern_counter + 1;
+                        // end
                     end
                 end
                 
@@ -441,11 +446,11 @@ module hybrid_bist #(
                     end
                     
                     // 診斷地址遞減邏輯 - 在最後一個 pattern 時執行
-                    if (td_pe_counter == 2'b11 && pattern_counter == TD_TEST_PATTERN_DEPTH-1) begin
-                        if (detection_addr > {ADDR_WIDTH{1'b0}}) begin
-                            detection_addr <= detection_addr - 1;  // 遞減計數
-                        end
-                    end
+                    // if (td_pe_counter == 2'b11 && pattern_counter == TD_TEST_PATTERN_DEPTH-1) begin
+                    //     if (detection_addr > {ADDR_WIDTH{1'b0}}) begin
+                    //         detection_addr <= detection_addr - 1;  // 遞減計數
+                    //     end
+                    // end
                 end
                 
                 WEIGHT_ALLOCATION: begin
@@ -734,7 +739,7 @@ module hybrid_bist #(
         endcase
     end
 
-    reg [PARTIAL_SUM_WIDTH-1:0] temp_data;
+    reg [PARTIAL_SUM_WIDTH-1:0] temp_data;  // 因為reg的位置不同，partial_sum 要比activation, weight 晚一個clk送
 
     always @(posedge clk or negedge rst_n) begin
         if(!rst_n) begin
@@ -783,6 +788,13 @@ module hybrid_bist #(
                     //     expected_data_reg <= envm_answer;
                     // end
                     if (shift_counter == 3'd0) begin    //確保前面的比對完成才放新的比較正確答案進來
+                        expected_data_reg <= temp_data;
+                    end
+                    else;
+                end
+
+                SA_FINAL_SHIFT: begin
+                    if(shift_counter == 3'd0) begin
                         expected_data_reg <= temp_data;
                     end
                     else;
@@ -854,45 +866,86 @@ module hybrid_bist #(
     // assign diagnosis_start_en = ((next_state == SA_SHIFT) && (pattern_counter != 0)) || (()&&()&&()) || (next_state == SA_FINAL_SHIFT);
     // assign diagnosis_start_en = ((next_state == SA_SHIFT) && (pattern_counter != 0) && (shift_counter != 3'd0)) || (next_state == SA_FINAL_SHIFT);
 
-    always @(*) begin
-        if (next_state == SA_SHIFT) begin
-            if(pattern_counter == 0) begin
-                diagnosis_start_en = 1'b0;
-            end
-            else if(pattern_counter == 1) begin
-                if(shift_counter == 3'd7 || shift_counter == 3'd0 || shift_counter == 3'd1) begin
-                    diagnosis_start_en = 1'b0;
-                end
-                else begin
-                    diagnosis_start_en = 1'b1;
-                end
-            end
-            else begin
-                diagnosis_start_en = 1'b1;
-            end
-        end
-        // if ((next_state == SA_SHIFT) && (pattern_counter == 0 )) begin
-        //     diagnosis_start_en = 1'b0;
-        // end 
-        // else if((next_state == SA_SHIFT) && (pattern_counter == 1) && (shift_counter >= 3'd1)) begin
-        //     diagnosis_start_en = 1'b1;
-        // end
-        // else if((next_state == SA_SHIFT) && (pattern_counter > 1)) begin
-        //     diagnosis_start_en = 1'b1;
-        // end
-        else if(next_state == SA_FINAL_SHIFT) begin
-            diagnosis_start_en = 1'b1;
+    // always @(*) begin
+    //     if (next_state == SA_SHIFT) begin
+    //         if(pattern_counter == 0) begin
+    //             diagnosis_start_en = 1'b0;
+    //         end
+    //         else if(pattern_counter == 1) begin
+    //             if(shift_counter == 3'd7 || shift_counter == 3'd0) begin
+    //                 diagnosis_start_en = 1'b0;
+    //             end
+    //             else begin
+    //                 diagnosis_start_en = 1'b1;
+    //             end
+    //         end
+    //         else begin
+    //             diagnosis_start_en = 1'b1;
+    //         end
+    //     end
+    //     else if(next_state == SA_FINAL_SHIFT) begin
+    //         diagnosis_start_en = 1'b1;
+    //     end
+    //     else if(next_state == TD_SHIFT) begin
+    //         if ((shift_counter == 3'd6 || shift_counter == 3'd7)) begin
+    //             diagnosis_start_en = 1'b1;
+    //         end
+    //         else begin
+    //             diagnosis_start_en = 1'b0;
+    //         end
+    //     end
+    //     else begin
+    //         diagnosis_start_en = 1'b0;
+    //     end
+    // end
+
+    always @(posedge clk , negedge rst_n) begin
+        if (!rst_n) begin
+            diagnosis_start_en <= 1'b0;
         end
         else begin
-            diagnosis_start_en = 1'b0;
+            if (current_state == SA_SHIFT && pattern_counter == 3'd1 && shift_counter == 3'd0) begin
+                diagnosis_start_en <= 1'b1; //diagnosis_start_en 開始
+            end 
+            else if (current_state == SA_FINAL_SHIFT && pattern_counter == 5'd12 && shift_counter == 3'd7)begin  // 有可能往後調1cycle
+                diagnosis_start_en <= 1'b0; //diagnosis_start_en 結束
+            end
+            else; 
         end
+    end
+
+    reg [ADDR_WIDTH-1:0] detection_addr_temp;
+    // detection_addr，SA 診斷結束把結果送到eNVM 儲存的addr
+    always @(posedge clk) begin     // 有LBIST_START 重置了，rst不用在重置
+        if (current_state == LBIST_START) begin    //current_state or next_state 都可以 ，有重置就好
+            detection_addr_temp <= SYSTOLIC_SIZE - 1;    // 初始化為最大值（最後一個 ROW）
+        end
+        else if (current_state == SA_FINAL_SHIFT) begin
+            detection_addr_temp <= detection_addr_temp - 1;
+            detection_addr <= detection_addr_temp;
+        end
+        else;
     end
     
     // 掃描模式訊號
-    assign scan_en = (next_state == SA_SHIFT && shift_counter != 3'd7) || (next_state == SA_FINAL_SHIFT) || (next_state == TD_SHIFT) || (next_state == TD_FINAL_SHIFT);
+    assign scan_en = (next_state == SA_SHIFT && shift_counter != 3'd7) || (next_state == SA_FINAL_SHIFT && shift_counter != 3'd7) || (next_state == TD_SHIFT) || (next_state == TD_FINAL_SHIFT);
 
     // detection_en 只有在SA的最後一個pattenr時觸發為1，目的是讓SA的錯誤資訊從DLC電路傳到eNVM
-    assign detection_en = (current_state == SA_FINAL_SHIFT);
+    // assign detection_en = (current_state == SA_FINAL_SHIFT);
+
+    always @(posedge clk or negedge rst_n) begin
+        if (current_state == LBIST_START) begin
+            detection_en <= 1'b0;
+        end
+        else begin
+            if(current_state == SA_FINAL_SHIFT) begin
+                detection_en <= 1'b1;
+            end
+            else begin
+                detection_en <= 1'b0;
+            end
+        end
+    end
 
     // MBIST 失敗標記組合邏輯
     assign MBIST_FAIL = (current_state == FAIL);
@@ -921,6 +974,7 @@ module hybrid_bist #(
     assign envm_wr_en_bist_bisr = (next_state == WEIGHT_ALLOCATION);
 
     //clk_w
+    // FINAL_SHIFT 不用clk_w , partial_sum 是跟clk的
     assign clk_w = (current_state == SA_SHIFT) || (current_state == TD_SHIFT) ? clk : 1'b0;
     
 endmodule

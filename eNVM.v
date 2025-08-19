@@ -16,7 +16,7 @@ module eNVM #(
     input TD_answer_choose , // TD測試下，選擇要launch還是capture answer( 0: launch answer , 1: capture answer )
     input [MAX_PATTERN_ADDR_WIDTH-1:0] pattern_counter, // 需要第幾個test_pattern
     input detection_en,     // 診斷結果送到envm儲存訊號
-    input [ADDR_WIDTH-1:0] detection_addr,
+    input [ADDR_WIDTH-1:0] detection_addr,  //因為沒有rst_n，因此要從外部送detection_addr，否則沒辦法重置
     input [SYSTOLIC_SIZE-1:0] single_pe_detection,
     input [SYSTOLIC_SIZE-1:0] column_fault_detection,   //一次傳全部
     input [SYSTOLIC_SIZE-1:0] row_fault_detection,      //...
@@ -55,10 +55,13 @@ module eNVM #(
     reg [SYSTOLIC_SIZE-1:0] faulty_pe_storage [SYSTOLIC_SIZE-1:0];
 
 
-    always @(posedge clk ) begin
+    always @(posedge clk) begin
         if(detection_en) begin
+            // 一次傳全部
             faulty_row_storage <= row_fault_detection;
             faulty_column_storage <= column_fault_detection;
+
+            // // 一次傳一個
             // faulty_row_storage[detection_addr] <= row_fault_detection;
             // faulty_column_storage[detection_addr] <= column_fault_detection;
 

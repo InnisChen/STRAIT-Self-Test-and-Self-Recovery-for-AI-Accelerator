@@ -1,5 +1,5 @@
-// STRAIT_PE
-module PE_STRAIT #(
+// PE_STRAIT_ERROR
+module PE_STRAIT_ERROR #(
     parameter SYSTOLIC_SIZE = 8,
     parameter WEIGHT_WIDTH = 8,
     parameter ACTIVATION_WIDTH = 8,
@@ -20,12 +20,12 @@ module PE_STRAIT #(
     wire [PARTIAL_SUM_WIDTH-1:0] partial_sum;
     wire [PARTIAL_SUM_WIDTH-1:0] MAC_result;
 
-    MAC #(
+    MAC_ERROR #(
         .SYSTOLIC_SIZE(SYSTOLIC_SIZE),
         .WEIGHT_WIDTH(WEIGHT_WIDTH),
         .ACTIVATION_WIDTH(ACTIVATION_WIDTH),
         .PARTIAL_SUM_WIDTH(PARTIAL_SUM_WIDTH)
-    ) MAC_u1(
+    ) MAC_ERROR_u1(
         .weight(weight_out),
         .activation(activation_out),                 
         .partial_sum(partial_sum_in),
@@ -60,7 +60,7 @@ module PE_STRAIT #(
     end
 endmodule
 
-module MAC #(
+module MAC_ERROR #(
     parameter SYSTOLIC_SIZE = 8,
     parameter WEIGHT_WIDTH = 8,
     parameter ACTIVATION_WIDTH = 8,
@@ -72,7 +72,8 @@ module MAC #(
     output [PARTIAL_SUM_WIDTH-1:0] result
 );
     wire [ACTIVATION_WIDTH + WEIGHT_WIDTH - 1:0] mul_result;
-    assign mul_result = weight * activation;
+    // assign mul_result = weight * activation;
+    assign mul_result = 0;
     assign result = mul_result + partial_sum;
     
 endmodule

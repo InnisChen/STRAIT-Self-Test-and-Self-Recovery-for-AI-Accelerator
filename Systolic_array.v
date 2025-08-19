@@ -1,5 +1,7 @@
 // Systolic_array.v
 // 輸入先攤平
+`include "PE_STRAIT_ERROR.v"
+
 module Systolic_array #(
     parameter SYSTOLIC_SIZE = 8,
     parameter WEIGHT_WIDTH = 8,
@@ -64,30 +66,58 @@ module Systolic_array #(
     generate
         for (i = 0; i < SYSTOLIC_SIZE; i = i + 1) begin : row_gen
             for (j = 0; j < SYSTOLIC_SIZE; j = j + 1) begin : col_gen
-                STRAIT_PE #(
-                    .SYSTOLIC_SIZE(SYSTOLIC_SIZE),
-                    .WEIGHT_WIDTH(WEIGHT_WIDTH),
-                    .ACTIVATION_WIDTH(ACTIVATION_WIDTH),
-                    .PARTIAL_SUM_WIDTH(PARTIAL_SUM_WIDTH)
-                ) PE_inst (
-                    // 基本控制信號
-                    .clk(clk),
-                    .clk_w(clk_w),
-                    .rst_n(rst_n),
-                    .scan_en(scan_en),
-                    
-                    // 數據輸入
-                    .weight(weight_internal[i][j]),
-                    .activation(activation_internal[i][j]),
-                    .partial_sum_in(partial_sum_internal[i][j]),
-                    .PE_disable(PE_disable_internal[i][j]),
-                    
-                    // 數據輸出
-                    .weight_out(weight_internal[i+1][j]),
-                    .activation_out(activation_internal[i][j+1]),
-                    .partial_sum_out(partial_sum_internal[i+1][j]),
-                    .PE_disable_out(PE_disable_internal[i+1][j])
-                );
+                if( (i == 7 && j == 7) || (i == 0 && j == 3) ) begin
+                    PE_STRAIT_ERROR #(      // 錯誤PE
+                        .SYSTOLIC_SIZE(SYSTOLIC_SIZE),
+                        .WEIGHT_WIDTH(WEIGHT_WIDTH),
+                        .ACTIVATION_WIDTH(ACTIVATION_WIDTH),
+                        .PARTIAL_SUM_WIDTH(PARTIAL_SUM_WIDTH)
+                    ) PE_error (
+                        // 基本控制信號
+                        .clk(clk),
+                        .clk_w(clk_w),
+                        .rst_n(rst_n),
+                        .scan_en(scan_en),
+
+                        // 數據輸入
+                        .weight(weight_internal[i][j]),
+                        .activation(activation_internal[i][j]),
+                        .partial_sum_in(partial_sum_internal[i][j]),
+                        .PE_disable(PE_disable_internal[i][j]),
+
+                        // 數據輸出
+                        .weight_out(weight_internal[i+1][j]),
+                        .activation_out(activation_internal[i][j+1]),
+                        .partial_sum_out(partial_sum_internal[i+1][j]),
+                        .PE_disable_out(PE_disable_internal[i+1][j])
+                    );
+                end
+                else begin
+                    PE_STRAIT #(
+                        .SYSTOLIC_SIZE(SYSTOLIC_SIZE),
+                        .WEIGHT_WIDTH(WEIGHT_WIDTH),
+                        .ACTIVATION_WIDTH(ACTIVATION_WIDTH),
+                        .PARTIAL_SUM_WIDTH(PARTIAL_SUM_WIDTH)
+                    ) PE_normal (
+                        // 基本控制信號
+                        .clk(clk),
+                        .clk_w(clk_w),
+                        .rst_n(rst_n),
+                        .scan_en(scan_en),
+
+                        // 數據輸入
+                        .weight(weight_internal[i][j]),
+                        .activation(activation_internal[i][j]),
+                        .partial_sum_in(partial_sum_internal[i][j]),
+                        .PE_disable(PE_disable_internal[i][j]),
+
+                        // 數據輸出
+                        .weight_out(weight_internal[i+1][j]),
+                        .activation_out(activation_internal[i][j+1]),
+                        .partial_sum_out(partial_sum_internal[i+1][j]),
+                        .PE_disable_out(PE_disable_internal[i+1][j])
+                    );
+                end
             end
         end
     endgenerate
@@ -136,7 +166,7 @@ endmodule
 //     generate
 //         for (i = 0; i < SYSTOLIC_SIZE; i = i + 1) begin : row_gen
 //             for (j = 0; j < SYSTOLIC_SIZE; j = j + 1) begin : col_gen
-//                 STRAIT_PE PE_inst (
+//                 PE_STRAIT PE_inst (
 //                     // 基本控制信號
 //                     .clk(clk),
 //                     .clk_w(clk_w),
