@@ -80,7 +80,7 @@ wire [SYSTOLIC_SIZE*ACTIVATION_WIDTH-1:0] activation_data_flat_buffer_array;
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 wire test_type;
-wire [MAX_PATTERN_ADDR_WIDTH-1:0] test_counter_bist_envm;
+wire [MAX_PATTERN_ADDR_WIDTH-1:0] pattern_counter_bist_envm;
 wire TD_answer_choose_bist_envm;
 wire detection_en_bist_envm;
 wire [ADDR_WIDTH-1:0] detection_addr_bist_envm;
@@ -124,7 +124,7 @@ wire [SYSTOLIC_SIZE-1:0] row_fault_detection_dlc_envm;
         .clk(clk),
         .test_type(test_type), // 0: SA , 1: TD    from hybrid_bist
         .TD_answer_choose(TD_answer_choose_bist_envm), // TD測試下，選擇要launch還是capture answer( 0: launch answer , 1: capture answer )
-        .test_counter(test_counter_bist_envm),      // 需要第幾個test_pattern
+        .pattern_counter(pattern_counter_bist_envm),      // 需要第幾個test_pattern
         .detection_en(detection_en_bist_envm),      // bist告知envm可以開始讀DLC的資料
         .detection_addr(detection_addr_bist_envm),      // 需要讀取第幾個row的錯誤資訊
 
@@ -307,7 +307,7 @@ wire [SYSTOLIC_SIZE-1:0] row_fault_detection_dlc_envm;
         // output
         // 與 eNVM 的介面 - outputs
         .test_type(test_type),      // 0: SA, 1: TD
-        .test_counter(test_counter_bist_envm),
+        .pattern_counter(pattern_counter_bist_envm),
         .TD_answer_choose(TD_answer_choose_bist_envm),
         .detection_en(detection_en_bist_envm),
         .detection_addr(detection_addr_bist_envm),

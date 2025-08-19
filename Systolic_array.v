@@ -21,7 +21,7 @@ module Systolic_array #(
     wire [WEIGHT_WIDTH-1:0] weight [0:SYSTOLIC_SIZE-1];
     wire [ACTIVATION_WIDTH-1:0] activation [0:SYSTOLIC_SIZE-1];
     wire [PARTIAL_SUM_WIDTH-1:0] partial_sum_in [0:SYSTOLIC_SIZE-1];
-    wire [PARTIAL_SUM_WIDTH-1:0] partial_sum [0:SYSTOLIC_SIZE-1];
+    wire [PARTIAL_SUM_WIDTH-1:0] partial_sum_out [0:SYSTOLIC_SIZE-1];
 
     // 內部連接線陣列
     wire [SYSTOLIC_SIZE-1:0] PE_disable_internal [SYSTOLIC_SIZE:0];
@@ -39,7 +39,7 @@ module Systolic_array #(
             assign partial_sum_in[i] = partial_sum_in_flat[i*PARTIAL_SUM_WIDTH +: PARTIAL_SUM_WIDTH];
             
             // 輸出打包 - 將陣列轉換為攤平向量
-            assign partial_sum_out_flat[i*PARTIAL_SUM_WIDTH +: PARTIAL_SUM_WIDTH] = partial_sum[i];
+            assign partial_sum_out_flat[i*PARTIAL_SUM_WIDTH +: PARTIAL_SUM_WIDTH] = partial_sum_out[i];
         end
     endgenerate
 
@@ -56,7 +56,7 @@ module Systolic_array #(
     // 輸出連接邏輯
     generate
         for (i = 0; i < SYSTOLIC_SIZE; i = i + 1) begin : output_connections
-            assign partial_sum[i] = partial_sum_internal[SYSTOLIC_SIZE][i];
+            assign partial_sum_out[i] = partial_sum_internal[SYSTOLIC_SIZE][i];
         end
     endgenerate
 
@@ -106,7 +106,7 @@ endmodule
 //     input [WEIGHT_WIDTH-1:0] weight [0:SYSTOLIC_SIZE-1],
 //     input [ACTIVATION_WIDTH-1:0] activation [0:SYSTOLIC_SIZE-1],
 //     input [PARTIAL_SUM_WIDTH-1:0] partial_sum_in [0:SYSTOLIC_SIZE-1],
-//     output [PARTIAL_SUM_WIDTH-1:0] partial_sum [0:SYSTOLIC_SIZE-1]
+//     output [PARTIAL_SUM_WIDTH-1:0] partial_sum_out [0:SYSTOLIC_SIZE-1]
 // );
 
 //     // 內部連接線陣列
@@ -128,7 +128,7 @@ endmodule
         
 //         // 連接輸出
 //         for (i = 0; i < SYSTOLIC_SIZE; i = i + 1) begin : output_connections
-//             assign partial_sum[i] = partial_sum_internal[SYSTOLIC_SIZE][i];
+//             assign partial_sum_out[i] = partial_sum_internal[SYSTOLIC_SIZE][i];
 //         end
 //     endgenerate
 
