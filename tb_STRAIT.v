@@ -308,9 +308,9 @@ module tb_STRAIT;
             if (BIST_mode == 0) begin
                 // MBIST監控
                 if (UUT.hybrid_bist_inst.current_state != UUT.hybrid_bist_inst.IDLE) begin
-                    $display("Time: %0t, MBIST State: %0d, Memory Addr: %0d, Pattern: %0d", 
+                    $display("Time: %0t, MBIST State: %0d, Pattern: %0d", 
                              $time, UUT.hybrid_bist_inst.current_state, 
-                             UUT.hybrid_bist_inst.memory_addr, UUT.hybrid_bist_inst.pattern_counter);
+                             UUT.hybrid_bist_inst.pattern_counter);
                 end
             end else begin
                 // LBIST監控

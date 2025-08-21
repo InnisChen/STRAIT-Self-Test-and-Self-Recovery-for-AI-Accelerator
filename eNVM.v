@@ -43,7 +43,7 @@ module eNVM #(
     reg [PARTIAL_SUM_WIDTH-1:0] TD_capture_answer_reg [0:TD_TEST_PATTERN_DEPTH-1];
 
     // test_type  0: SA , 1: TD
-    assign Scan_data_weight = test_type ? TD_weight_2_reg[pattern_counter] : SA_weight_reg[pattern_counter];
+    assign Scan_data_weight = test_type ? (TD_answer_choose ? TD_weight_1_reg[pattern_counter] : TD_weight_2_reg[pattern_counter]) : SA_weight_reg[pattern_counter];
     assign Scan_data_activation = test_type ? (TD_answer_choose ? TD_activation_1_reg[pattern_counter] : TD_activation_2_reg[pattern_counter]) : SA_activation_reg[pattern_counter];
     assign Scan_data_partial_sum_in = test_type ? (TD_answer_choose ? TD_partial_sum_in_1_reg[pattern_counter] : TD_partial_sum_in_2_reg[pattern_counter]) : SA_partial_sum_in_reg[pattern_counter];
     assign Scan_data_answer = test_type ? (TD_answer_choose ? TD_capture_answer_reg[pattern_counter] : TD_launch_answer_reg[pattern_counter]) : SA_answer_reg[pattern_counter];
