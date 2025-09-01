@@ -353,6 +353,7 @@ module hybrid_bist #(
                         shift_counter <= 3'b000;  // 重置準備下次使用
                         if(td_pe_counter == 2'b11) begin
                             pattern_counter <= pattern_counter + 1;
+                            td_pe_counter <= 2'b00;
                         end
                         else begin
                             td_pe_counter <= td_pe_counter + 1;
@@ -460,7 +461,6 @@ module hybrid_bist #(
             // SA 測試：所有 PE 使用相同資料
             weight_in_test_flat = {SYSTOLIC_SIZE{envm_weight}};
             activation_in_test_flat = {SYSTOLIC_SIZE{envm_activation}};
-            // partial_sum_test_flat = {SYSTOLIC_SIZE{envm_partial_sum_in}};
             partial_sum_test_flat = {SYSTOLIC_SIZE{partial_sum_temp}};
             // 因為pe裡面的partial_sum是使用輸入的做運算，資料送完把scan_en變為0的瞬間就會開始計算，下一個cycle就可以開始送新的資料，
             // 但前提是資料要先處理好放在array的輸入端，但partial sum 會使用到輸入，所以我就沒辦法馬上在下一個cycle送資料
@@ -677,8 +677,8 @@ module hybrid_bist #(
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             expected_data_reg <= {PARTIAL_SUM_WIDTH{1'b0}};
-            launch_expected_reg <= {PARTIAL_SUM_WIDTH{1'b0}};
-            capture_expected_reg <= {PARTIAL_SUM_WIDTH{1'b0}};
+            launch_expected_reg <= {PARTIAL_SUM_WIDTH{1'b1}};
+            capture_expected_reg <= {PARTIAL_SUM_WIDTH{1'b1}};
         end
         else begin
             case (current_state)
@@ -704,18 +704,29 @@ module hybrid_bist #(
                     else;
                 end
 
-                TD_SHIFT: begin
-                    if (shift_counter == 3'd0 && td_pe_counter == 2'b00) begin  // 每一組pattern送第一次的時候就存期望結果
-                        launch_expected_reg <= envm_answer;  // 儲存 Launch 預期結果
+                TD_SHIFT: begin //最後一個再存，否則前一筆比較資料會被蓋掉
+                    if(td_pe_counter == 2'd1) begin
+                        if(shift_counter == 3'd6) begin
+                            launch_expected_reg <= envm_answer;  // 儲存 Launch 預期結果
+                        end
+                        else if(shift_counter == 3'd7) begin
+                            capture_expected_reg <= envm_answer;  // 儲存 Capture 預期結果
+                        end
+                        else;
                     end
                     else;
+
+                    expected_data_reg <= shift_counter[0] ? launch_expected_reg : capture_expected_reg;  // 根據 shift_counter 選擇比較的結果
+
+                end
+
+                TD_LAUNCH: begin
+                    // expected_data_reg <= launch_expected_reg;  // Launch 比較
                 end
                 
                 TD_CAPTURE: begin
-                    if (shift_counter == 3'd1 && td_pe_counter == 2'b00) begin  // 每一組pattern送第一次的時候就存期望結果
-                        capture_expected_reg <= envm_answer;  // 儲存 Capture 預期結果
-                    end
-                    else;
+
+                    // expected_data_reg <= capture_expected_reg;  // Capture 比較
                 end
                 
                 TD_FINAL_SHIFT: begin
@@ -728,9 +739,9 @@ module hybrid_bist #(
                     end
                 end
                 default: begin
-                    expected_data_reg <= {PARTIAL_SUM_WIDTH{1'b0}};
-                    launch_expected_reg <= {PARTIAL_SUM_WIDTH{1'b0}};
-                    capture_expected_reg <= {PARTIAL_SUM_WIDTH{1'b0}};
+                    // expected_data_reg <= {PARTIAL_SUM_WIDTH{1'b0}};
+                    // launch_expected_reg <= {PARTIAL_SUM_WIDTH{1'b0}};
+                    // capture_expected_reg <= {PARTIAL_SUM_WIDTH{1'b0}};
                 end
             endcase
         end
@@ -803,7 +814,7 @@ module hybrid_bist #(
         else;
     end
     
-    always @(posedge clk or negedge rst_n) begin
+    always @(posedge clk) begin
         if (current_state == LBIST_START) begin
             detection_en <= 1'b0;
         end
@@ -818,7 +829,8 @@ module hybrid_bist #(
     end
 
     // test_type ( 0: SA, 1: TD )
-    assign test_type = (current_state == TD_SHIFT) || (current_state == TD_LAUNCH) || (current_state == TD_CAPTURE)|| (current_state == TD_FINAL_SHIFT);
+    // (next_state == TD_SHIFT) 資料才可以在前一個cycle準備好
+    assign test_type = (next_state == TD_SHIFT) || (current_state == TD_SHIFT) || (current_state == TD_LAUNCH) || (current_state == TD_CAPTURE)|| (current_state == TD_FINAL_SHIFT);
 
     // 掃描模式訊號
     assign scan_en = (next_state == SA_SHIFT && shift_counter != 3'd7) || (next_state == SA_FINAL_SHIFT && shift_counter != 3'd7) || (next_state == TD_SHIFT) || (next_state == TD_FINAL_SHIFT);
