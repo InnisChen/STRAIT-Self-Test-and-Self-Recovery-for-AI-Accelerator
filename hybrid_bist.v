@@ -90,9 +90,8 @@ module hybrid_bist #(
 );
 
     // 內部計數器
-    reg [MAX_PATTERN_ADDR_WIDTH-1:0] test_counter;       // pattern 計數器
     reg [1:0] td_pe_counter;                                // TD 測試 PE 計數器 (0-3)
-    reg [1:0] td_pe_select;                                 // 當前使用的 PE 選擇
+    // reg [1:0] td_pe_select;                                 // 當前使用的 PE 選擇
     reg [2:0] shift_counter;                                // Shift 計數器 (0-7，8個cycle)     改成3bit
     reg [2:0] shift_out_counter;                            // Shift Out 計數器 (0-7)           改成3bit    
     
@@ -125,6 +124,9 @@ module hybrid_bist #(
 
                 SA_SHIFT            = 5'b01000,  // SA pattern shift in + previous result shift out
                 SA_FINAL_SHIFT      = 5'b01001,  // SA final result shift out
+
+                TD_START            = 5'b10011,
+                TD_START_2          = 5'b10100,
 
                 TD_SHIFT            = 5'b01010,
                 TD_LAUNCH           = 5'b01011,  // 1 cycle
@@ -217,10 +219,18 @@ module hybrid_bist #(
             
             SA_FINAL_SHIFT: begin
                 if (shift_counter == 3'd7) begin  // 8 cycles完成
-                    next_state = TD_SHIFT;        // 進入TD測試
+                    next_state = TD_START;        // 進入TD測試
                     // next_state = TEST_COMPLETE;
                 end
             end
+
+            TD_START: begin
+                next_state = TD_SHIFT;
+            end
+
+            // TD_START_2: begin
+            //     next_state = TD_SHIFT;
+            // end
             
             TD_SHIFT: begin
                 if (shift_counter == 3'd7) begin  // 8 cycles shift 完成
@@ -286,20 +296,18 @@ module hybrid_bist #(
         if (!rst_n) begin
             pattern_counter <= {MAX_PATTERN_ADDR_WIDTH{1'b0}};
             // td_pe_counter <= 2'b00;
-            // detection_addr <= {ADDR_WIDTH{1'b0}};
             normal_addr_counter <= {ADDR_WIDTH{1'b0}};
-            weight_allocation_counter <= 3'b000;
-            weight_load_counter <= 3'b000;
+            weight_allocation_counter <= 3'd0;
+            weight_load_counter <= 3'd0;
         end
         else if (START && test_mode) begin
             pattern_counter <= {MAX_PATTERN_ADDR_WIDTH{1'b0}};
             // td_pe_counter <= 2'b00;
-            // detection_addr <= {ADDR_WIDTH{1'b0}};
-            shift_counter <= 3'b000;
-            shift_out_counter <= 3'b000;
+            shift_counter <= 3'd0;
+            shift_out_counter <= 3'd0;
             next_pattern_loading <= 1'b0;
-            weight_allocation_counter <= 3'b000;
-            weight_load_counter <= 3'b000;
+            weight_allocation_counter <= 3'd0;
+            weight_load_counter <= 3'd0;
         end
         else begin
             case (current_state)
@@ -317,15 +325,14 @@ module hybrid_bist #(
                 LBIST_START: begin
                     pattern_counter <= {MAX_PATTERN_ADDR_WIDTH{1'b0}};
                     td_pe_counter <= 2'b00;
-                    // detection_addr <= SYSTOLIC_SIZE - 1;  // 初始化為最大值（最後一個 ROW）
-                    shift_counter <= 3'b000;
-                    shift_out_counter <= 3'b000;
+                    shift_counter <= 3'd0;
+                    shift_out_counter <= 3'd0;
                     next_pattern_loading <= 1'b0;
                 end
                 
                 SA_SHIFT: begin
                     if (shift_counter == 3'd7) begin
-                        shift_counter <= 3'b000;  // 重置準備capture
+                        shift_counter <= 3'd0;  // 重置準備capture
                     end 
                     else begin
                         shift_counter <= shift_counter + 1;
@@ -338,7 +345,7 @@ module hybrid_bist #(
                 
                 SA_FINAL_SHIFT: begin
                     if (shift_counter == 3'd7) begin
-                        shift_counter <= 3'b000;  // 重置準備TD測試
+                        shift_counter <= 3'd0;  // 重置準備TD測試
                         // 準備TD測試的初始化
                         pattern_counter <= {MAX_PATTERN_ADDR_WIDTH{1'b0}};
                         // td_pe_counter <= 2'b00;
@@ -347,10 +354,16 @@ module hybrid_bist #(
                         shift_counter <= shift_counter + 1;
                     end
                 end
+
+                TD_START: begin
+                    // td_pe_counter <= 2'b00;
+                    // shift_counter <= 3'd0;
+                    // pattern_counter <= {MAX_PATTERN_ADDR_WIDTH{1'b0}};
+                end
                 
                 TD_SHIFT: begin
                     if (shift_counter == 3'd7) begin
-                        shift_counter <= 3'b000;  // 重置準備下次使用
+                        // shift_counter <= 3'd0;  // 重置準備下次使用
                         if(td_pe_counter == 2'b11) begin
                             pattern_counter <= pattern_counter + 1;
                             td_pe_counter <= 2'b00;
@@ -369,6 +382,7 @@ module hybrid_bist #(
                 end
 
                 TD_LAUNCH: begin
+                    shift_counter <= 3'd0;  // 重置準備下次使用
                 end
 
                 TD_CAPTURE: begin
@@ -378,7 +392,7 @@ module hybrid_bist #(
                     if (shift_out_counter < 3'd7) begin
                         shift_out_counter <= shift_out_counter + 1;
                     end else begin
-                        shift_out_counter <= 3'b000;  // 重置
+                        shift_out_counter <= 3'd0;  // 重置
                         
                         // 更新測試計數器
                         if (td_pe_counter == 2'b11) begin
@@ -395,21 +409,15 @@ module hybrid_bist #(
                     if (shift_out_counter >= 3'd2) begin
                         next_pattern_loading <= 1'b1;
                     end
-                    
-                    // 診斷地址遞減邏輯 - 在最後一個 pattern 時執行
-                    // if (td_pe_counter == 2'b11 && pattern_counter == TD_TEST_PATTERN_DEPTH-1) begin
-                    //     if (detection_addr > {ADDR_WIDTH{1'b0}}) begin
-                    //         detection_addr <= detection_addr - 1;  // 遞減計數
-                    //     end
-                    // end
+
                 end
                 
                 WEIGHT_ALLOCATION: begin
                     if (weight_allocation_counter < 3'd7) begin
                         weight_allocation_counter <= weight_allocation_counter + 1;
                     end else begin
-                        weight_allocation_counter <= 3'b000;  // 重置準備下個階段
-                        weight_load_counter <= 3'b000;        // 初始化載入計數器
+                        weight_allocation_counter <= 3'd0;  // 重置準備下個階段
+                        weight_load_counter <= 3'd0;        // 初始化載入計數器
                     end
                 end
                 
@@ -417,7 +425,7 @@ module hybrid_bist #(
                     if (weight_load_counter < 3'd6) begin
                         weight_load_counter <= weight_load_counter + 1;
                     end else begin
-                        weight_load_counter <= 3'b000;        // 重置
+                        weight_load_counter <= 3'd0;        // 重置
                         normal_addr_counter <= {ADDR_WIDTH{1'b0}}; // 準備正常運作
                     end
                 end
@@ -446,6 +454,9 @@ module hybrid_bist #(
             if(next_state == SA_SHIFT) begin
                 partial_sum_temp <= envm_partial_sum_in;
             end
+            else if(next_state == TD_SHIFT) begin
+                partial_sum_temp <= envm_partial_sum_in;
+            end
         end
     end
 
@@ -465,14 +476,14 @@ module hybrid_bist #(
             // 因為pe裡面的partial_sum是使用輸入的做運算，資料送完把scan_en變為0的瞬間就會開始計算，下一個cycle就可以開始送新的資料，
             // 但前提是資料要先處理好放在array的輸入端，但partial sum 會使用到輸入，所以我就沒辦法馬上在下一個cycle送資料
         end
-        else if (next_state == TD_SHIFT) begin
-            // TD 測試：根據 td_pe_select 選擇性分佈資料
-            case (td_pe_select)
+        else if (next_state == TD_SHIFT || next_state == TD_LAUNCH) begin
+            // TD 測試：根據 td_pe_counter 選擇性分佈資料
+            case (td_pe_counter)
                 2'b00: begin  // 測試左上 PE (0,0)
                     // for (i = 0; i < SYSTOLIC_SIZE; i = i + 1) begin
                     //     if (i[0] == 1'b0) begin  // 偶數 columns (0,2,4,6)
                     //         weight_in_test_flat[i*WEIGHT_WIDTH +: WEIGHT_WIDTH] = envm_weight;
-                    //         partial_sum_test_flat[i*PARTIAL_SUM_WIDTH +: PARTIAL_SUM_WIDTH] = envm_partial_sum_in;
+                    //         partial_sum_test_flat[i*PARTIAL_SUM_WIDTH +: PARTIAL_SUM_WIDTH] = partial_sum_temp;
                     //     end
                     //     if (i[0] == 1'b0) begin  // 偶數 rows (0,2,4,6)
                     //         activation_in_test_flat[i*ACTIVATION_WIDTH +: ACTIVATION_WIDTH] = envm_activation;
@@ -482,7 +493,7 @@ module hybrid_bist #(
                     for (i = 0; i < SYSTOLIC_SIZE; i = i + 1) begin
                         if (i[0] == 1'b1) begin  // 奇數 columns (1,3,5,7)
                             weight_in_test_flat[i*WEIGHT_WIDTH +: WEIGHT_WIDTH] = envm_weight;
-                            partial_sum_test_flat[i*PARTIAL_SUM_WIDTH +: PARTIAL_SUM_WIDTH] = envm_partial_sum_in;
+                            partial_sum_test_flat[i*PARTIAL_SUM_WIDTH +: PARTIAL_SUM_WIDTH] = partial_sum_temp; // envm_partial_sum_in 改 partial_sum_temp
                         end
                         if (i[0] == 1'b1) begin  // 奇數 rows (1,3,5,7)
                             activation_in_test_flat[i*ACTIVATION_WIDTH +: ACTIVATION_WIDTH] = envm_activation;
@@ -495,7 +506,7 @@ module hybrid_bist #(
                     for (i = 0; i < SYSTOLIC_SIZE; i = i + 1) begin
                         if (i[0] == 1'b1) begin  // 奇數 columns (1,3,5,7)
                             weight_in_test_flat[i*WEIGHT_WIDTH +: WEIGHT_WIDTH] = envm_weight;
-                            partial_sum_test_flat[i*PARTIAL_SUM_WIDTH +: PARTIAL_SUM_WIDTH] = envm_partial_sum_in;
+                            partial_sum_test_flat[i*PARTIAL_SUM_WIDTH +: PARTIAL_SUM_WIDTH] = partial_sum_temp;
                         end
                         if (i[0] == 1'b0) begin  // 偶數 rows (0,2,4,6)
                             activation_in_test_flat[i*ACTIVATION_WIDTH +: ACTIVATION_WIDTH] = envm_activation;
@@ -507,7 +518,7 @@ module hybrid_bist #(
                     for (i = 0; i < SYSTOLIC_SIZE; i = i + 1) begin
                         if (i[0] == 1'b0) begin  // 偶數 columns (0,2,4,6)
                             weight_in_test_flat[i*WEIGHT_WIDTH +: WEIGHT_WIDTH] = envm_weight;
-                            partial_sum_test_flat[i*PARTIAL_SUM_WIDTH +: PARTIAL_SUM_WIDTH] = envm_partial_sum_in;
+                            partial_sum_test_flat[i*PARTIAL_SUM_WIDTH +: PARTIAL_SUM_WIDTH] = partial_sum_temp;
                         end
                         if (i[0] == 1'b1) begin  // 奇數 rows (1,3,5,7)
                             activation_in_test_flat[i*ACTIVATION_WIDTH +: ACTIVATION_WIDTH] = envm_activation;
@@ -519,7 +530,7 @@ module hybrid_bist #(
                     for (i = 0; i < SYSTOLIC_SIZE; i = i + 1) begin
                         if (i[0] == 1'b0) begin  // 偶數 columns (0,2,4,6)
                             weight_in_test_flat[i*WEIGHT_WIDTH +: WEIGHT_WIDTH] = envm_weight;
-                            partial_sum_test_flat[i*PARTIAL_SUM_WIDTH +: PARTIAL_SUM_WIDTH] = envm_partial_sum_in;
+                            partial_sum_test_flat[i*PARTIAL_SUM_WIDTH +: PARTIAL_SUM_WIDTH] = partial_sum_temp;
                         end
                         if (i[0] == 1'b0) begin  // 偶數 rows (0,2,4,6)
                             activation_in_test_flat[i*ACTIVATION_WIDTH +: ACTIVATION_WIDTH] = envm_activation;
@@ -528,12 +539,17 @@ module hybrid_bist #(
                     // for (i = 0; i < SYSTOLIC_SIZE; i = i + 1) begin
                     //     if (i[0] == 1'b1) begin  // 奇數 columns (1,3,5,7)
                     //         weight_in_test_flat[i*WEIGHT_WIDTH +: WEIGHT_WIDTH] = envm_weight;
-                    //         partial_sum_test_flat[i*PARTIAL_SUM_WIDTH +: PARTIAL_SUM_WIDTH] = envm_partial_sum_in;
+                    //         partial_sum_test_flat[i*PARTIAL_SUM_WIDTH +: PARTIAL_SUM_WIDTH] = partial_sum_temp;
                     //     end
                     //     if (i[0] == 1'b1) begin  // 奇數 rows (1,3,5,7)
                     //         activation_in_test_flat[i*ACTIVATION_WIDTH +: ACTIVATION_WIDTH] = envm_activation;
                     //     end
                     // end
+                end
+                default: begin
+                    for (i = 0; i < SYSTOLIC_SIZE; i = i + 1) begin
+                        activation_in_test_flat[i*ACTIVATION_WIDTH +: ACTIVATION_WIDTH] = {ACTIVATION_WIDTH{1'd1}};
+                    end
                 end
             endcase
         end
@@ -600,8 +616,7 @@ module hybrid_bist #(
     
     always @(*) begin
         // 預設值
-        test_counter = pattern_counter;
-        td_pe_select = td_pe_counter;
+        // td_pe_select = td_pe_counter;
         
         // BISR 控制信號預設值
         read_addr = normal_addr_counter;  // 預設使用正常地址
@@ -618,15 +633,12 @@ module hybrid_bist #(
                 if (next_pattern_loading) begin
                     // 根據將要更新的計數器設定下一個測試的參數
                     if (td_pe_counter == 2'b11 && pattern_counter < TD_TEST_PATTERN_DEPTH-1) begin
-                        test_counter = pattern_counter + 1;  // 下一個 pattern
-                        td_pe_select = 2'b00;  // 重置到第一個 PE
+                        // td_pe_select = 2'b00;  // 重置到第一個 PE
                     end else if (td_pe_counter < 2'b11) begin
-                        test_counter = pattern_counter;  // 同一個 pattern
-                        td_pe_select = td_pe_counter + 1;  // 下一個 PE
+                        // td_pe_select = td_pe_counter + 1;  // 下一個 PE
                     end
                 end else begin
-                    test_counter = pattern_counter;
-                    td_pe_select = td_pe_counter;
+                    // td_pe_select = td_pe_counter;
                 end
             end
             
@@ -833,14 +845,14 @@ module hybrid_bist #(
     assign test_type = (next_state == TD_SHIFT) || (current_state == TD_SHIFT) || (current_state == TD_LAUNCH) || (current_state == TD_CAPTURE)|| (current_state == TD_FINAL_SHIFT);
 
     // 掃描模式訊號
-    assign scan_en = (next_state == SA_SHIFT && shift_counter != 3'd7) || (next_state == SA_FINAL_SHIFT && shift_counter != 3'd7) || (next_state == TD_SHIFT) || (next_state == TD_FINAL_SHIFT);
+    assign scan_en = (next_state == SA_SHIFT && shift_counter != 3'd7) || (next_state == SA_FINAL_SHIFT && shift_counter != 3'd7) || (current_state == TD_SHIFT) || (next_state == TD_FINAL_SHIFT);
 
     // MBIST 失敗標記組合邏輯
     assign MBIST_FAIL = (current_state == FAIL);
 
     // TD_answer_choose TD錯誤選擇
     // 可能要修改
-    assign TD_answer_choose = ((current_state == TD_SHIFT)) && shift_counter[0];    //(current_state == TD_FINAL_SHIFT) || 
+    assign TD_answer_choose = (current_state == TD_SHIFT) && ~shift_counter[0];    //反向之後再envm裡面choose的時候做
 
     // 啟動權重配置
     assign allocation_start = (current_state == WEIGHT_ALLOCATION);

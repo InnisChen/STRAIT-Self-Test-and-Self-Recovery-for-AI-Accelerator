@@ -72,7 +72,7 @@ module tb_STRAIT;
     // 文件讀取相關變數
     integer sa_file, td_file;
     integer sa_scan_result, td_scan_result;
-    reg [8*100:1] line_buffer;  // 用於讀取一行文字
+    reg [10*100:1] line_buffer;  // 用於讀取一行文字
     reg [WEIGHT_WIDTH-1:0] temp_weight1, temp_weight2;
     reg [ACTIVATION_WIDTH-1:0] temp_activation1, temp_activation2;
     reg [PARTIAL_SUM_WIDTH-1:0] temp_partial_sum1, temp_partial_sum2;

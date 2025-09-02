@@ -66,33 +66,33 @@ module Systolic_array #(
     generate
         for (i = 0; i < SYSTOLIC_SIZE; i = i + 1) begin : row_gen
             for (j = 0; j < SYSTOLIC_SIZE; j = j + 1) begin : col_gen
-                // if( (i == 7 && j == 7) || (i == 0 && j == 3) ) begin
-                //     PE_STRAIT_ERROR #(      // 錯誤PE
-                //         .SYSTOLIC_SIZE(SYSTOLIC_SIZE),
-                //         .WEIGHT_WIDTH(WEIGHT_WIDTH),
-                //         .ACTIVATION_WIDTH(ACTIVATION_WIDTH),
-                //         .PARTIAL_SUM_WIDTH(PARTIAL_SUM_WIDTH)
-                //     ) PE_error (
-                //         // 基本控制信號
-                //         .clk(clk),
-                //         .clk_w(clk_w),
-                //         .rst_n(rst_n),
-                //         .scan_en(scan_en),
+                if( (i == 7 && j == 7) || (i == 0 && j == 0) ) begin
+                    PE_STRAIT_ERROR #(      // 錯誤PE
+                        .SYSTOLIC_SIZE(SYSTOLIC_SIZE),
+                        .WEIGHT_WIDTH(WEIGHT_WIDTH),
+                        .ACTIVATION_WIDTH(ACTIVATION_WIDTH),
+                        .PARTIAL_SUM_WIDTH(PARTIAL_SUM_WIDTH)
+                    ) PE_error (
+                        // 基本控制信號
+                        .clk(clk),
+                        .clk_w(clk_w),
+                        .rst_n(rst_n),
+                        .scan_en(scan_en),
 
-                //         // 數據輸入
-                //         .weight(weight_internal[i][j]),
-                //         .activation(activation_internal[i][j]),
-                //         .partial_sum_in(partial_sum_internal[i][j]),
-                //         .PE_disable(PE_disable_internal[i][j]),
+                        // 數據輸入
+                        .weight(weight_internal[i][j]),
+                        .activation(activation_internal[i][j]),
+                        .partial_sum_in(partial_sum_internal[i][j]),
+                        .PE_disable(PE_disable_internal[i][j]),
 
-                //         // 數據輸出
-                //         .weight_out(weight_internal[i+1][j]),
-                //         .activation_out(activation_internal[i][j+1]),
-                //         .partial_sum_out(partial_sum_internal[i+1][j]),
-                //         .PE_disable_out(PE_disable_internal[i+1][j])
-                //     );
-                // end
-                // else begin
+                        // 數據輸出
+                        .weight_out(weight_internal[i+1][j]),
+                        .activation_out(activation_internal[i][j+1]),
+                        .partial_sum_out(partial_sum_internal[i+1][j]),
+                        .PE_disable_out(PE_disable_internal[i+1][j])
+                    );
+                end
+                else begin
                     PE_STRAIT #(
                         .SYSTOLIC_SIZE(SYSTOLIC_SIZE),
                         .WEIGHT_WIDTH(WEIGHT_WIDTH),
@@ -117,7 +117,7 @@ module Systolic_array #(
                         .partial_sum_out(partial_sum_internal[i+1][j]),
                         .PE_disable_out(PE_disable_internal[i+1][j])
                     );
-                // end
+                end
             end
         end
     endgenerate
